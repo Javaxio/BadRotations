@@ -622,14 +622,15 @@ local function runRotation()
         -- DOT damage to teammates cast Enveloping Mist
 			if isChecked("DOT cast EM") then
 				local debuff_list={
-                    {spellID = 230345    , stacks = 0}   ,   --Crashing Comet
-                    {spellID = 236603    , stacks = 0}   ,   --Rapid Shot
-                    {spellID = 236712    , stacks = 0}   ,   --Lunar Beacon
-                    {spellID = 242017    , stacks = 2}   ,   --Black Winds
+                    {spellID = 230345   ,   stacks = 0   ,   secs = 6},   --Crashing Comet
+                    {spellID = 236603   ,   stacks = 0   ,   secs = 4},   --Rapid Shot
+                    {spellID = 236712   ,   stacks = 0   ,   secs = 2},   --Lunar Beacon
+                    {spellID = 242017   ,   stacks = 2   ,   secs = 6},   --Black Winds
+                    {spellID = 240915   ,   stacks = 0   ,   secs = 6}    --Armageddon hail
 				}
 				for i=1, #br.friend do
 					for k,v in pairs(debuff_list) do
-						if getDebuffRemain(br.friend[i].unit,v.spellID) > 4 and getDebuffStacks(br.friend[i].unit,v.spellID) >= v.stacks and not buff.envelopingMist.exists(br.friend[i].unit) and not isCastingSpell(spell.essenceFont) and UnitInRange(br.friend[i].unit) then
+						if getDebuffRemain(br.friend[i].unit,v.spellID) > v.secs and getDebuffStacks(br.friend[i].unit,v.spellID) >= v.stacks and not buff.envelopingMist.exists(br.friend[i].unit) and not isCastingSpell(spell.essenceFont) and UnitInRange(br.friend[i].unit) then
 							if cast.envelopingMist(br.friend[i].unit) then return end
 						end
 					end
