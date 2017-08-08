@@ -81,6 +81,11 @@ local function createOptions()
         br.ui:createSpinnerWithout(section, "DPS",  90,  0,  100,  1,  colorWhite.." Dps when lowest health >= ")
         br.ui:checkSectionState(section)
 
+        -- Boss Section
+        section = br.ui:createSection(br.ui.window.profile, "Boss Mods Settings")
+        br.ui:createCheckbox(section,colorwarlock.."Find Illidan",colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables".. colorWhite.."Find Illidan in KJ encounter.",1)
+        br.ui:checkSectionState(section)
+
         -- Tier Section
         section = br.ui:createSection(br.ui.window.profile, "Tier Settings")
         br.ui:createSpinner(section, colormonk.."Enveloping Mist with Surge of Mist",  65,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Trigger t20 4piece bonus", colorWhite.."Health Percent to Cast At")
@@ -244,6 +249,7 @@ local function runRotation()
     friends.yards25 = getAllies("player",25)
     friends.yards40 = getAllies("player",40)
 
+    encounterID                                         = ""
     if not inCombat then
         TFV = false
         TFRM = false
@@ -258,6 +264,57 @@ local function runRotation()
     end
     --    Print("LastSpell:"..GetSpellInfo(botSpell))
     --    Print("LastTarget:"..SetRaidTarget(currentTarget,8))
+    
+    
+    -------------------
+    ---  Boss Mods  ---
+    -------------------
+    AddEventCallback("ENCOUNTER_START",function(...)
+	    encounterID = select(1,...)
+    end)
+
+    local function drawline(target)
+        local LibDraw = LibStub("LibDraw-1.0")
+        local playerX, playerY, playerZ = ObjectPosition("player")
+        local targetX, targetY, targetZ = ObjectPosition(target)
+        LibDraw.Line(playerX, playerY, playerZ, targetX, targetY, targetZ)
+    end
+
+    local function clearCanvas()
+        local LibDraw = LibStub("LibDraw-1.0")
+        LibDraw.clearCanvas()
+    end
+
+    local function findIllidan()
+        for i = 1, ObjectCount() do
+            local name = ObjectName(ObjectWithIndex(i))
+            local object = ObjectWithIndex(i)
+            local px, py, pz = ObjectPosition("player")
+            local tx, ty, tz = ObjectPosition(object)
+            if name == "Lord Illidan Stormrage" and ObjectExists(object) then
+                drawline(object)
+            end
+        end
+    end
+    
+    local function actionList_bossmods()
+        if GetCurrentMapAreaID() == 1147 then
+        -- Kill Jaeden
+            if encounterID == 2051 then
+                if isChecked("Find Illidan") then
+                    debuff = getDebuffById("player",236555) --Deceiver veil
+                    if debuff then
+                        findIllidan()
+                        return true
+                    else
+                        clearCanvas()
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    
     --------------------
     --- Action Lists ---
     --------------------
@@ -808,6 +865,7 @@ local function runRotation()
             if actionList_Extra() then return true end
         end
         if inCombat and not IsMounted() and getBuffRemain("player", 192002 ) < 10 then
+            actionList_bossmods()
             if actionList_Defensive() then return true end
             if actionList_Cooldown() then return true end
             if actionList_AOEHealing() then return true end
@@ -815,6 +873,7 @@ local function runRotation()
             if actionList_SingleTargetHealing() then return true end
             if actionList_Interrupt() then return true end
             if actionList_DPS() then return true end
+            
         end
         -----------
         --- END ---
