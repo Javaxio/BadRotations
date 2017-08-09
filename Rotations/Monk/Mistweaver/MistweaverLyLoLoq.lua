@@ -1,4 +1,4 @@
-local rotationName = "Javaxio"
+local rotationName = "LyLoLoq"
 ---------------
 --- Toggles ---
 ---------------
@@ -133,38 +133,38 @@ local function createOptions()
 
         -- Healing Options
         section = br.ui:createSection(br.ui.window.profile, "Healing")
-        br.ui:createSpinner(section, colordrood.."Essence Font",  60,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.." use of Essence Font.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Min Essence Font Targets",  5,  1,  40,  1,  colorBlue.."Minimum Essence Font Targets "..colorGold.."(This includes you)")
-        br.ui:createSpinner(section, colordrood.."Refreshing Jade Wind",  60,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.." use of Refreshing Jade Wind.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Min Refreshing Jade Wind Targets",  3,  1,  40,  1,  colorBlue.."Minimum Refreshing Jade Wind "..colorGold.."(This includes you)")
-        br.ui:createSpinner(section, colordrood.."Chi Burst",  70,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Chi Burst.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Min Chi Burst Targets",  3,  1,  40,  1,  colorBlue.."Minimum Chi Burst Targets "..colorGold.."(This includes you)")
+        br.ui:createSpinner(section, colormage.."Essence Font",  60,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.." use of Essence Font.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Min Essence Font Targets",  5,  1,  40,  1,  colorBlue.."Minimum Essence Font Targets "..colorGold.."(This includes you)")
+        br.ui:createSpinner(section, colormage.."Refreshing Jade Wind",  60,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.." use of Refreshing Jade Wind.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Min Refreshing Jade Wind Targets",  3,  1,  40,  1,  colorBlue.."Minimum Refreshing Jade Wind "..colorGold.."(This includes you)")
+        br.ui:createSpinner(section, colormage.."Chi Burst",  70,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Chi Burst.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Min Chi Burst Targets",  3,  1,  40,  1,  colorBlue.."Minimum Chi Burst Targets "..colorGold.."(This includes you)")
         --br.ui:createCheckbox(section,"Show Lines",colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Lines of Chi Burst.")
-        br.ui:createSpinner(section, colordrood.."Vivify",  80,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Min Vivify Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify Targets "..colorGold.."(This includes you)")
-        br.ui:createSpinner(section, colordrood.."Vivify with Lifecycles",  85,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify with Lifecycles.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Min Vivify with Lifecycles Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify with Lifecycles Targets "..colorGold.."(This includes you)")
-        br.ui:createSpinner(section, colordrood.."Vivify with Uplift",  90,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify with Uplift.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Min Vivify with Uplift Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify with Uplift Targets "..colorGold.."(This includes you)")
-        br.ui:createSpinner(section, colordrood.."Vivify with Lifecycles + Uplift",  95,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify with Lifecycles + Uplift.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Min Vivify with Lifecycles + Uplift Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify with Lifecycles + Uplift Targets "..colorGold.."(This includes you)")
-        br.ui:createSpinner(section, colordrood.."Vivify with Dance Of Mist",  85,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify with Dance of mist.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Min Vivify with Dance Of Mist Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify with Dance of Mist Targets "..colorGold.."(This includes you)")
-        br.ui:createSpinner(section, colordrood.."Sheilun's Gift",  70,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Sheilun's Gift.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Sheilun's Gift Charges",  5,  1,  12,  1,  colorBlue.."Minimum Sheilun's Gift charges")
-        br.ui:createSpinner(section, colordrood.."Enveloping Mist",  75,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Enveloping Mist.", colorWhite.."Health Percent to Cast At")
-        br.ui:createCheckbox(section, colordrood.."Enveloping Mist - Tank Only", colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Enveloping Mist on tank only.")
-        br.ui:createSpinner(section, colordrood.."Enveloping Mist with Lifecycles",  65,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Enveloping Mist.", colorWhite.."Health Percent to Cast At")
-		br.ui:createSpinner(section, colordrood.."Zen Pulse",  90,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Zen Pulse.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinnerWithout(section, colordrood.."Zen Pulse Enemies",  3,  1,  100,  1,  colorBlue.."Minimum Zen Pulse Enemies")
-        br.ui:createCheckbox(section, colordrood.."Effuse", colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Effuse.")
-        br.ui:createSpinnerWithout(section, colordrood.."Effuse Greater or equals",  90,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Effuse.", colorWhite.."Health Percent to Cast At. (Exemple: Effuse Greater or equals 80% and <= 100%)")
-        br.ui:createSpinnerWithout(section, colordrood.."Effuse Less or equals",  90,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Effuse.", colorWhite.."Health Percent to Cast At. (Exemple: Effuse Greater or equals 80% and <= 100%)")
-        br.ui:createSpinner(section, colordrood.."Renewing Mist",  100,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Renewing Mist.", colorWhite.."Health Percent to Cast At")
-        br.ui:createCheckbox(section,colordrood.."Renewing Mist - On CD",colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Renewing Mist on CD regardless in combat.")
+        br.ui:createSpinner(section, colormage.."Vivify",  80,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Min Vivify Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify Targets "..colorGold.."(This includes you)")
+        br.ui:createSpinner(section, colormage.."Vivify with Lifecycles",  85,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify with Lifecycles.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Min Vivify with Lifecycles Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify with Lifecycles Targets "..colorGold.."(This includes you)")
+        br.ui:createSpinner(section, colormage.."Vivify with Uplift",  90,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify with Uplift.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Min Vivify with Uplift Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify with Uplift Targets "..colorGold.."(This includes you)")
+        br.ui:createSpinner(section, colormage.."Vivify with Lifecycles + Uplift",  95,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify with Lifecycles + Uplift.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Min Vivify with Lifecycles + Uplift Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify with Lifecycles + Uplift Targets "..colorGold.."(This includes you)")
+        br.ui:createSpinner(section, colormage.."Vivify with Dance Of Mist",  85,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Vivify with Dance of mist.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Min Vivify with Dance Of Mist Targets",  2,  1,  3,  1,  colorBlue.."Minimum Vivify with Dance of Mist Targets "..colorGold.."(This includes you)")
+        br.ui:createSpinner(section, colormage.."Sheilun's Gift",  70,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Sheilun's Gift.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Sheilun's Gift Charges",  5,  1,  12,  1,  colorBlue.."Minimum Sheilun's Gift charges")
+        br.ui:createSpinner(section, colormage.."Enveloping Mist",  75,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Enveloping Mist.", colorWhite.."Health Percent to Cast At")
+        br.ui:createCheckbox(section, colormage.."Enveloping Mist - Tank Only", colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Enveloping Mist on tank only.")
+        br.ui:createSpinner(section, colormage.."Enveloping Mist with Lifecycles",  65,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Enveloping Mist.", colorWhite.."Health Percent to Cast At")
+		br.ui:createSpinner(section, colormage.."Zen Pulse",  90,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Zen Pulse.", colorWhite.."Health Percent to Cast At")
+        br.ui:createSpinnerWithout(section, colormage.."Zen Pulse Enemies",  3,  1,  100,  1,  colorBlue.."Minimum Zen Pulse Enemies")
+        br.ui:createCheckbox(section, colormage.."Effuse", colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Effuse.")
+        br.ui:createSpinnerWithout(section, colormage.."Effuse Greater or equals",  90,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Effuse.", colorWhite.."Health Percent to Cast At. (Exemple: Effuse Greater or equals 80% and <= 100%)")
+        br.ui:createSpinnerWithout(section, colormage.."Effuse Less or equals",  90,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Effuse.", colorWhite.."Health Percent to Cast At. (Exemple: Effuse Greater or equals 80% and <= 100%)")
+        br.ui:createSpinner(section, colormage.."Renewing Mist",  100,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Renewing Mist.", colorWhite.."Health Percent to Cast At")
+        br.ui:createCheckbox(section,colormage.."Renewing Mist - On CD",colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Renewing Mist on CD regardless in combat.")
         --        br.ui:createSpinner(section, "Mistwalk",  80,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Mistwalk.", colorWhite.."Health Percent to Cast At")
-        br.ui:createSpinner(section, colordrood.."Chi Wave",  80,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Chi Wave.", colorWhite.."Health Percent to Cast At")
-        br.ui:createDropdown(section, colordrood.."Summon Jade Serpent", {colorGreen.."Player",colorBlue.."Target",colorRed.."Tank"}, 3,colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Summon Jade Serpent.", colorWhite.."Use Summon Jade Serpent at location of.")
+        br.ui:createSpinner(section, colormage.."Chi Wave",  80,  0,  100,  1,  colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Chi Wave.", colorWhite.."Health Percent to Cast At")
+        br.ui:createDropdown(section, colormage.."Summon Jade Serpent", {colorGreen.."Player",colorBlue.."Target",colorRed.."Tank"}, 3,colorGreen.."Enables"..colorWhite.."/"..colorRed.."Disables "..colorWhite.."Use of Summon Jade Serpent.", colorWhite.."Use Summon Jade Serpent at location of.")
         br.ui:checkSectionState(section)
 
 
@@ -704,12 +704,10 @@ local function runRotation()
     local function actionList_AOEHealing()
 	-- Chi Burst
         if isChecked("Chi Burst") and talent.chiBurst then
-            if castWiseAoEHeal(br.friend,spell.chiBurst,7,getValue("Chi Burst"),getValue("Min Chi Burst Targets"),10,true,true) then return end
-        
-            --if getUnitsInRect(7,47,false,getValue("Chi Burst")) >= getValue("Min Chi Burst Targets") then
-                --actionList_CheckVelen()
-                --if cast.chiBurst("player") then return true end
-            --end
+            if getUnitsInRect(7,47,false,getValue("Chi Burst")) >= getValue("Min Chi Burst Targets") then
+                actionList_CheckVelen()
+                if cast.chiBurst("player") then return true end
+            end
         end
     -- Essence Font
 			if isChecked("Essence Font") and cd.essenceFont == 0 and getLowAlliesInTable(getValue("Essence Font"), friends.yards25) >= getValue("Min Essence Font Targets") then
@@ -852,8 +850,10 @@ local function runRotation()
         -----------------
         -- Pause
         if pause(true) or isCastingSpell(spell.essenceFont) or UnitDebuffID("player",188030) then return true end
-        if not IsMounted and not inCombat and not drinking then
-            if isChecked("OOC Healing") then
+
+        if not IsMounted() and not inCombat and not drinking then
+            if actionList_Extra() then return true end			
+			if isChecked("OOC Healing") then
                 if actionList_SingleTargetHealing() then return true end
                 if actionList_AOEHealing() then return true end
 			end
@@ -861,9 +861,7 @@ local function runRotation()
         if not IsMounted() and inCombat then
             if actionList_ThunderFocus() then return true end
         end
-        if not IsMounted() and getBuffRemain("player", 192002 ) < 10 then
-            if actionList_Extra() then return true end
-        end
+        
         if inCombat and not IsMounted() and getBuffRemain("player", 192002 ) < 10 then
             actionList_bossmods()
             if actionList_Defensive() then return true end
