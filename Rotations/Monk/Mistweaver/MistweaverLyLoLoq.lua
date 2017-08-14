@@ -705,7 +705,7 @@ local function runRotation()
 	-- Chi Burst
         if isChecked("Chi Burst") and talent.chiBurst then
             if getUnitsInRect(7,47,false,getValue("Chi Burst")) >= getValue("Min Chi Burst Targets") then
-                actionList_CheckVelen()
+                -- actionList_CheckVelen()
                 if cast.chiBurst("player") then return true end
             end
         end
