@@ -232,6 +232,7 @@ local function runRotation()
     local gcd                                           = br.player.gcd
 	local gcdMax										= br.player.gcdMax
     local drinking                                      = UnitBuff("player",192002) ~= nil or UnitBuff("player",167152) ~= nil or UnitBuff("player",192001) ~= nil
+    local racial                                        = br.player.getRacial()
 
 	local pullTimer                                     = br.DBM:getPulltimer()
 
@@ -240,6 +241,7 @@ local function runRotation()
     local enemies                                       = enemies or {}
     local friends                                       = friends or {}
 	local tanks                                         = getTanksTable()
+    local encounterID                                   = ""
 
     enemies.yards5 = br.player.enemies(5)
     enemies.yards8 = br.player.enemies(8)
@@ -249,7 +251,8 @@ local function runRotation()
     friends.yards25 = getAllies("player",25)
     friends.yards40 = getAllies("player",40)
 
-    encounterID                                         = ""
+    
+
     if not inCombat then
         TFV = false
         TFRM = false
@@ -265,7 +268,28 @@ local function runRotation()
     --    Print("LastSpell:"..GetSpellInfo(botSpell))
     --    Print("LastTarget:"..SetRaidTarget(currentTarget,8))
     
-    
+    local function getLowest()
+        local lowestUnit = "player"
+        for i = 1, #br.friend do
+            local thisUnit = br.friend[i].unit
+            local thisHP = getHP(thisUnit)
+            local thisBuff = UnitBuffID(thisUnit,191840)
+            if thisBuff then
+                thisHP = thisHP - 5
+            end
+            local lowestHP = getHP(lowestUnit)
+            local lowestBuff = UnitBuffID("player",191840)
+            if lowestBuff then
+                lowestHP = lowestHP - 5
+            end
+            if thisHP < lowestHP then
+                lowestUnit = thisUnit
+            end
+        end
+        return lowestUnit
+    end
+
+    lowest = getLowest()
     -------------------
     ---  Boss Mods  ---
     -------------------
@@ -302,7 +326,7 @@ local function runRotation()
         -- Kill Jaeden
             if encounterID == 2051 then
                 if isChecked("Find Illidan") then
-                    debuff = getDebuffById("player",236555) --Deceiver veil
+                    debuff = UnitDebuffID("player",236555) --Deceiver veil
                     if debuff then
                         findIllidan()
                         return true
@@ -500,7 +524,7 @@ local function runRotation()
             end
 		-- Arcane Torrent
             if isChecked("Arcane Torrent") and mana <= getValue("Arcane Torrent") and br.player.race == "BloodElf" then
-                if br.player.castRacial() then return true end
+                if castSpell("player",racial,false,false,false) then return end
             end
 		-- Enveloping Mist + Surge of Mist. Avoid wasting proc 
             if isChecked("Emergency Enveloping Mist with Surge of Mist") and buff.surgeOfMist.exist and buff.surgeOfMist.remain(br.player.unit) < 6 then 
@@ -615,14 +639,6 @@ local function runRotation()
                     if cast.sheilunsGift(lowest.unit) then return true end
                 end
             end
-			-- Heal ourself if critical HP.
-            --if php < getValue("Critical Health") then
-            --    if cd.renewingMist == 0 then
-            --       if cast.renewingMist("player") then return true end
-            --    else
-            --        if cast.envelopingMist("player") then return true end
-            --    end
-            --end
 		-- Zen Pulse	
             if isChecked("Zen Pulse") and talent.zenPulse then
                 if lowest.hp <= getValue("Zen Pulse") and getNumEnemies(lowest.unit, 8) >= getValue("Zen Pulse Enemies") then
