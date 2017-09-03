@@ -231,7 +231,7 @@ local function runRotation()
     local debuff                                        = br.player.debuff
     local gcd                                           = br.player.gcd
 	local gcdMax										= br.player.gcdMax
-    local drinking                                      = UnitBuff("player",192002) ~= nil or UnitBuff("player",167152) ~= nil or UnitBuff("player",192001) ~= nil
+    local drinking                                      = UnitBuffID("player",192002) ~= nil or UnitBuffID("player",167152) ~= nil or UnitBuffID("player",192001) ~= nil
     local racial                                        = br.player.getRacial()
 
 	local pullTimer                                     = br.DBM:getPulltimer()
@@ -720,11 +720,11 @@ local function runRotation()
     local function actionList_AOEHealing()
 	-- Chi Burst
         if isChecked("Chi Burst") and talent.chiBurst then
-            if castWiseAoEHeal(br.friend,spell.chiBurst,10,getValue("Chi Burst"),getValue("Min Chi Burst Targets"),10,true,true) then return end
-            --if getUnitsInRect(7,47,false,getValue("Chi Burst")) >= getValue("Min Chi Burst Targets") then
+            --if castWiseAoEHeal(br.friend,spell.chiBurst,10,getValue("Chi Burst"),getValue("Min Chi Burst Targets"),10,true,true) then return end
+            if getUnitsInRect(7,47,false,getValue("Chi Burst")) >= getValue("Min Chi Burst Targets") then
                 -- actionList_CheckVelen()
-                -- if cast.chiBurst("player") then return true end
-            --end
+                 if cast.chiBurst("player") then return true end
+            end
         end
     -- Essence Font
 			if isChecked("Essence Font") and cd.essenceFont == 0 and getLowAlliesInTable(getValue("Essence Font"), friends.yards25) >= getValue("Min Essence Font Targets") then
