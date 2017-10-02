@@ -228,6 +228,7 @@ function br.read.combatLog()
                 and spell ~= 194279     -- Caltrop DoT
                 and spell ~= 196771
                 and spell ~= 211793
+                and spell ~= 139546     -- Combo Point
             then
                 local color = "|cff12C8FF"
                 local white = "|cffFFFFFF"
@@ -325,7 +326,7 @@ function br.read.combatLog()
         if sourceName ~= UnitName("player") then return end
         if event == "SPELL_DAMAGE" then
             if spell == 198813 then -- Vengeful Retreat
-                -- SetHackEnabled("NoKnockback", false)
+                -- HackEnabled("NoKnockback", false)
                 return
             end
             return

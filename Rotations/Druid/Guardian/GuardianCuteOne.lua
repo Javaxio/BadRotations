@@ -178,6 +178,7 @@ local function runRotation()
         local canFlask                                      = canUse(br.player.flask.wod.agilityBig)
         local cast                                          = br.player.cast
         local combatTime                                    = getCombatTime()
+	    local combo                                         = br.player.power.comboPoints.amount()
         local cd                                            = br.player.cd
         local charges                                       = br.player.charges
         local deadMouse                                     = UnitIsDeadOrGhost("mouseover")
@@ -203,10 +204,9 @@ local function runRotation()
         local php                                           = br.player.health
         local playerMouse                                   = UnitIsPlayer("mouseover")
         local potion                                        = br.player.potion
-        local power, powmax, powgen, powerDeficit           = br.player.power.amount.rage, br.player.power.rage.max, br.player.power.regen, br.player.power.rage.deficit
+        local power, powmax, powgen, powerDeficit           = br.player.power.rage.amount(), br.player.power.rage.max(), br.player.power.rage.regen(), br.player.power.rage.deficit()
         local pullTimer                                     = br.DBM:getPulltimer()
         local racial                                        = br.player.getRacial()
-        local recharge                                      = br.player.recharge
         local solo                                          = br.player.instance=="none"
         local snapLossHP                                    = 0
         local spell                                         = br.player.spell
@@ -214,10 +214,12 @@ local function runRotation()
         local travel, flight, bear, cat, noform             = br.player.buff.travelForm.exists(), br.player.buff.flightForm.exists(), br.player.buff.bearForm.exists(), buff.catForm.exists(), GetShapeshiftForm()==0
         local trinketProc                                   = false
         local ttd                                           = getTTD
-        local ttm                                           = br.player.power.ttm
+        local ttm                                           = br.player.power.rage.ttm
         local units                                         = units or {}
 
         units.dyn5 = br.player.units(5)
+	units.dyn8 = br.player.units(8)
+	units.dyn40 = br.player.units(40)
         enemies.yards5 = br.player.enemies(5)
         enemies.yards8 = br.player.enemies(8)
         enemies.yards10 = br.player.enemies(10)
@@ -534,8 +536,46 @@ local function runRotation()
 --- In Combat Rotation ---
 --------------------------
         -- Cat is 4 fyte!
-            if inCombat and not bear and not (flight or travel or IsMounted() or IsFlying()) then
-                -- if cast.catForm() then return end
+            if inCombat and cat and talent.feralAffinity and isValidUnit("target") and profileStop==false then
+				-- Swipe
+				if (#enemies.yards8 > 1 and #enemies.yards8 < 4 and debuff.rake.exists(units.dyn8)) or #enemies.yards8 >= 4 then
+					if cast.swipe() then return end
+				end
+				-- Rip
+				if combo == 5 and #enemies.yards8 < 4 then
+					for i = 1, #enemies.yards5 do
+						local thisUnit = enemies.yards5[i]
+						if getDistance(thisUnit) < 5 then
+							if not debuff.rip.exists(thisUnit) or debuff.rip.remain(thisUnit) < 4 then
+								if cast.rip(thisUnit) then return end
+							end
+						end
+					end
+				end
+				-- Rake
+				if combo < 5 and #enemies.yards8 < 4 then
+					for i = 1, #enemies.yards5 do
+						local thisUnit = enemies.yards5[i]
+					if getDistance(thisUnit) < 5 then
+							if not debuff.rake.exists(thisUnit) then
+								if cast.rake(thisUnit) then return end
+							end
+						end
+					end
+				end
+				---- Ferocious Bite
+				if combo == 5 and #enemies.yards8 < 4 then
+					for i = 1, #enemies.yards5 do
+						local thisUnit = enemies.yards5[i]
+						if getDistance(thisUnit) < 5 and debuff.rip.exists(thisUnit) then
+							if cast.ferociousBite(thisUnit) then return end
+						end
+					end
+				end
+				-- Shred
+				if combo < 5 and debuff.rake.exists(units.dyn5) and #enemies.yards8 < 2 then
+					if cast.shred(units.dyn5) then return end
+				end
             elseif inCombat and bear and profileStop==false and isValidUnit("target") then
 
     ------------------------------

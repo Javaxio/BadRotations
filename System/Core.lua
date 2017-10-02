@@ -19,58 +19,7 @@ end
 --[[---------  ----  -----  -------------  ----------  ----  --------  -------------------------------------------------------------------------------------------------]]
 --[[---------  -----  ----           ---  ------------  ---            -------------------------------------------------------------------------------------------------------------------]]
 --[[-------------------------------------------------------------------------------------------------------------------------------------------------------]]
--- local elapsedTime = 0
--- local updateRate = 0
--- function EnemyEngine(_, time)
--- 	elapsedTime = elapsedTime + time
--- 	if getOptionValue("Enemy Update Rate") ~= nil and getOptionValue("Enemy Update Rate") > 0.5 then updateRate = getOptionValue("Enemy Update Rate")
--- 		else updateRate = 0.5
--- 	end
--- 	if updateRate < #getEnemies("player",50) then
--- 		updateRate = #getEnemies("player",50)
--- 	end
--- 	-- ChatOverlay(updateRate)
--- 	--print(updateRate)
--- 	if FireHack ~= nil and br.data.settings[br.selectedSpec].toggles["Power"] == 1 and elapsedTime >= updateRate then --0.5 then
--- 		elapsedTime = 0
--- 		-- Enemies Engine
--- 		-- br.handleObjects()
--- 		-- br.EnemiesEngine()
--- 		-- EnemiesEngine();
--- 		FindEnemy()
--- 	end
--- end
-
- local frame = CreateFrame("FRAME")
--- frame:SetScript("OnUpdate", EnemyEngine)
-
--- local elapsedTime2 = 0
--- function PlayerUpdate(_, time)
--- 	elapsedTime2 = elapsedTime + time
--- 	if FireHack ~= nil and br.data.settings[br.selectedSpec].toggles["Power"] == 1 and elapsedTime2 >= getOptionValue("Player Update Rate") then
--- 		elapsedTime2 = 0
--- 	-- Load Spec Profiles
--- 	    br.selectedProfile = br.data.settings[br.selectedSpec]["Rotation".."Drop"] or 1
--- 		local playerSpec = GetSpecializationInfo(GetSpecialization())
-
--- 		if br.player == nil or br.player.profile ~= br.selectedSpec then
--- 	        br.player = br.loader:new(playerSpec,br.selectedSpec)
--- 	        setmetatable(br.player, {__index = br.loader})
--- 	        br.player:createOptions()
--- 	        br.player:createToggles()
--- 	        br.player:update()
--- 	    end
--- 	    -- Update Player
--- 		if br.player ~= nil then
--- 			br.player:update()
--- 		end
--- 	end
--- end
-
--- local playerUpdate = CreateFrame("Frame")
--- playerUpdate:SetScript("OnUpdate", PlayerUpdate)
-
-
+local frame = CreateFrame("FRAME")
 frame:RegisterEvent("ADDON_LOADED");
 frame:RegisterEvent("PLAYER_LOGOUT")
 frame:RegisterUnitEvent("PLAYER_ENTERING_WORLD")
@@ -131,6 +80,7 @@ function frame:OnEvent(event, arg1, arg2, arg3, arg4, arg5)
 	                    for i = 1, #br.player.queue do
 	                        if GetSpellInfo(spell) == GetSpellInfo(br.player.queue[i].id) then
 	                            tremove(br.player.queue,i)
+	                            if IsAoEPending() then SpellSpotTargeting() end
 	                            if not isChecked("Mute Queue") then
 	                            	Print("Cast Success! - Removed |cFFFF0000"..spellName.."|r from the queue.")
 	                            end
@@ -167,39 +117,59 @@ frame:SetScript("OnEvent", frame.OnEvent)
 --[[-------------------------------------------------------------------------------------------------------------------------------------------------------]]
 --[[-------------------------------------------------------------------------------------------------------------------------------------------------------]]
 --[[This function is refired everytime wow ticks. This frame is located at the top of Core.lua]]
-local updateRate = updateRate or 0.1
 
 function getUpdateRate()
-	return updateRate
-end
-function BadRotationsUpdate(self)
+	local updateRate = updateRate or 0.1
 	if updateRate < 0.1 then
 		updateRate = 0.1
 	end
+
+	local FrameRate = GetFramerate() or 0
+ 	if isChecked("Auto Delay") then
+ 		if FrameRate ~= 0 and FrameRate < 100 then
+ 			updateRate = (100 - FrameRate)/100
+ 		else
+ 			updateRate = 0.1
+ 		end	 		
+--[[	 	if FrameRate ~= 0 and FrameRate < 30 and updateRate < 0.5  then
+	 		updateRate = updateRate + 0.1
+	 	elseif FrameRate > 80 and updateRate ~= 0.1 then
+	 		updateRate = updateRate - 0.1
+	 	end--]]
+	elseif getOptionValue("Bot Update Rate") == nil then 
+	 	updateRate = 0.1 else updateRate = getOptionValue("Bot Update Rate") 
+	end
+	
+	return updateRate
+end
+function BadRotationsUpdate(self)
+	-- if updateRate < 0.1 then
+	-- 	updateRate = 0.1
+	-- end
 	if isChecked("Talent Anywhere") then
 		talentAnywhere()
 	end
-	 local startTime = debugprofilestop()
-	 if br.updateInProgress ~= true then
-	 	self.updateInProgress = true
-	 	local tempTime = GetTime();
-	 	if not self.lastUpdateTime then
-	 		self.lastUpdateTime = tempTime
-	 	end
+	local startTime = debugprofilestop()
+	-- if br.updateInProgress ~= true then
+	--  	self.updateInProgress = true
+	--  	local tempTime = GetTime();
+	--  	if not self.lastUpdateTime then
+	--  		self.lastUpdateTime = tempTime
+	--  	end
 	 	
-	 	local FrameRate = GetFramerate() or 0
-	 	if isChecked("Auto Delay") then	 		
-		 	if FrameRate ~= 0 and FrameRate < 30 and updateRate < 0.5  then
-		 		updateRate = updateRate + 0.1
-		 	elseif FrameRate > 80 and updateRate ~= 0.1 then
-		 		updateRate = updateRate - 0.1
-		 	end
-		elseif getOptionValue("Bot Update Rate") == nil then 
-		 	updateRate = 0.1 else updateRate = getOptionValue("Bot Update Rate") 
-		end
+	 -- 	local FrameRate = GetFramerate() or 0
+	 -- 	if isChecked("Auto Delay") then	 		
+		--  	if FrameRate ~= 0 and FrameRate < 30 and updateRate < 0.5  then
+		--  		updateRate = updateRate + 0.1
+		--  	elseif FrameRate > 80 and updateRate ~= 0.1 then
+		--  		updateRate = updateRate - 0.1
+		--  	end
+		-- elseif getOptionValue("Bot Update Rate") == nil then 
+		--  	updateRate = 0.1 else updateRate = getOptionValue("Bot Update Rate") 
+		-- end
 
-	 	if self.lastUpdateTime and (tempTime - self.lastUpdateTime) > updateRate then --0.1 then
-	 		self.lastUpdateTime = tempTime
+	 	-- if self.lastUpdateTime and (tempTime - self.lastUpdateTime) > getUpdateRate() then --updateRate then --0.1 then
+	 		-- self.lastUpdateTime = tempTime
 			-- Check for Unlocker
 			if FireHack == nil then
 			 	br.ui:closeWindow("all")
@@ -224,8 +194,8 @@ function BadRotationsUpdate(self)
 						end
 					-- Load Spec Profiles
 					    br.selectedProfile = br.data.settings[br.selectedSpec]["Rotation".."Drop"] or 1
-						local playerSpec = GetSpecializationInfo(GetSpecialization())
-
+					    local playerSpec = GetSpecializationInfo(GetSpecialization())
+					    -- Initialize Player
 						if br.player == nil or br.player.profile ~= br.selectedSpec then
 					        br.player = br.loader:new(playerSpec,br.selectedSpec)
 					        setmetatable(br.player, {__index = br.loader})
@@ -234,13 +204,22 @@ function BadRotationsUpdate(self)
 					        br.player:update()
 					    end
 					    -- Update Player
-					    if br.player ~= nil then
+					    if br.player ~= nil and not CanExitVehicle() and br.timer:useTimer("playerUpdate", getUpdateRate()) then --br.debug.cpu.pulse.currentTime/10) then
 							br.player:update()
 						end
-						FindEnemy()
-					-- Enemies Engine
-						-- FindEnemy()
-						-- EnemiesEngine()
+					-- Enemy Engine
+						if br.timer:useTimer("omUpdate", getUpdateRate()) then --br.debug.cpu.enemiesEngine.units.currentTime/10) then
+							getOMUnits()
+						end
+						if br.timer:useTimer("enemyUpdate", getUpdateRate()) then --br.debug.cpu.enemiesEngine.enemy.currentTime/10) then
+							FindEnemy()
+						end
+					-- Healing Engine
+						if isChecked("HE Active") then
+							br.friend:Update()
+						end
+					-- Auto Loot
+						autoLoot()
 					-- Close windows and swap br.selectedSpec on Spec Change
 						if select(2,GetSpecializationInfo(GetSpecialization())) ~= br.selectedSpec then
 					    	-- Closing the windows will save the position
@@ -263,11 +242,8 @@ function BadRotationsUpdate(self)
 				    	displayDistance = math.ceil(targetDistance)
 						mainText:SetText(displayDistance)
 
-					-- Auto Loot
-						autoLoot()
-
 					-- Queue Casting
-						if isChecked("Queue Casting") and not UnitChannelInfo("player") then
+						if (isChecked("Queue Casting") or (br.player ~= nil and br.player.queue ~= 0)) and not UnitChannelInfo("player") then
 							-- Catch for spells not registering on Combat log
 						    if castQueue() then return end
 						end
@@ -288,46 +264,18 @@ function BadRotationsUpdate(self)
 						ProfessionHelper()
 
 				    -- Rotation Log
-				    	if not br.ui.window['debug']['parent'] then
-				    		br.ui:createDebugWindow()
-				    		br.ui:closeWindow("debug")
-				    	end
-					    if getOptionCheck("Rotation Log") then
-					    	if not br.ui.window['debug']['parent'] then br.ui:createDebugWindow() end
-					    	br.ui:showWindow("debug")
-					    elseif br.data.settings[br.selectedSpec]["debug"] == nil then
-				    			br.data.settings[br.selectedSpec]["debug"] = {}
-				    			br.data.settings[br.selectedSpec]["debug"].active = false
-				    	elseif br.data.settings[br.selectedSpec]["debug"].active == true then
-					    	br.ui:closeWindow("debug")
-					    end
-		    -- FPS Intensive Functions
-					-- Healing Engine
-						if isChecked("HE Active") then
-							br.friend:Update()
-						end
-
-					-- Enemies Engine
-						-- EnemiesEngine()
-
+				    	br.ui:toggleDebugWindow()
 					end --End Update Check
-					self.updateInProgress = false
+					-- self.updateInProgress = false
 				end -- End Update In Progress Check
 		 	end -- End Main Button Active Check
-		 end
-	end	-- End FireHack Check
+	-- 	 end
+	-- end	-- End FireHack Check
 	br.debug.cpu.pulse.totalIterations = br.debug.cpu.pulse.totalIterations + 1
 	br.debug.cpu.pulse.currentTime = debugprofilestop()-startTime
 	br.debug.cpu.pulse.elapsedTime = br.debug.cpu.pulse.elapsedTime + debugprofilestop()-startTime
 	br.debug.cpu.pulse.averageTime = br.debug.cpu.pulse.elapsedTime / br.debug.cpu.pulse.totalIterations
 end -- End Bad Rotations Update Function
--- Enemies Engine
--- EnemiesEngine();
-
--- -- Update Player
--- if br.player ~= nil then
--- 	br.player:update()
--- end
 --[[-------------------------------------------------------------------------------------------------------------------------------------------------------]]
 
 --[[-------------------------------------------------------------------------------------------------------------------------------------------------------]]

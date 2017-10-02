@@ -22,7 +22,7 @@ function br.ui:createWindow(name, width, height, title, color, messageWindow)
         br.ui:savePosition(name)
         br.data.settings[br.selectedSpec][name]["active"] = false
         DiesalGUI:OnMouse(this,button)
-        PlaySound("gsTitleOptionExit")
+        PlaySound(799)
         window:FireEvent("OnClose")
         window:Hide()
     end)
@@ -189,15 +189,17 @@ function br.ui:toggleWindow(windowName)
     for k, v in pairs(br.ui.window) do
         if k == windowName then
             if br.ui.window[k].parent ~= nil then 
-                if br.data.settings[br.selectedSpec][k].active == nil then
-                    br.ui.windw[k].parent:Show()
-                    br.data.settings[br.selectedSpec][k].active = true
-                elseif br.data.settings[br.selectedSpec][k].active then
-                    br.ui.window[k].parent.closeButton:Click()
-                    br.data.settings[br.selectedSpec][k].active = false
-                else
-                    br.ui.window[k].parent:Show()
-                    br.data.settings[br.selectedSpec][k].active = true
+                if br.data.settings[br.selectedSpec][k] ~= nil then
+                    if br.data.settings[br.selectedSpec][k].active == nil then
+                        br.ui.window[k].parent:Show()
+                        br.data.settings[br.selectedSpec][k].active = true
+                    elseif br.data.settings[br.selectedSpec][k].active then
+                        br.ui.window[k].parent.closeButton:Click()
+                        br.data.settings[br.selectedSpec][k].active = false
+                    else
+                        br.ui.window[k].parent:Show()
+                        br.data.settings[br.selectedSpec][k].active = true
+                    end
                 end
             end
         end

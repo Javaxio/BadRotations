@@ -66,8 +66,8 @@ local function createOptions()
         section = br.ui:createSection(br.ui.window.profile, "Cooldowns")
         -- Agi Pot
             br.ui:createCheckbox(section,"Potion")
-        -- Flask / Crystal
-            br.ui:createCheckbox(section,"Flask / Crystal")
+        -- Elixir
+            br.ui:createDropdownWithout(section,"Elixir", {"Flask of Seventh Demon","Repurposed Fel Focuser","Oralius' Whispering Crystal","None"}, 1, "|cffFFFFFFSet Elixir to use.")
         -- Racial
             br.ui:createCheckbox(section,"Racial")
         -- Ring of Collapsing Futures
@@ -141,7 +141,8 @@ end
 --- ROTATION ---
 ----------------
 local function runRotation()
-    if br.timer:useTimer("debugElemental", math.random(0.15,0.3)) then
+    -- if br.timer:useTimer("Enhancement", br.debug.cpu.cBuilder.profile/10) then
+        local startTime = debugprofilestop()
         --Print("Running: "..rotationName)
 
 ---------------
@@ -169,6 +170,7 @@ local function runRotation()
         local deadtar, attacktar, hastar, playertar         = UnitIsDeadOrGhost("target"), UnitCanAttack("target", "player"), GetObjectExists("target"), UnitIsPlayer("target")
         local debuff                                        = br.player.debuff
         local enemies                                       = enemies or {}
+        local equiped                                       = br.player.equiped  
         local falling, swimming, flying, moving             = getFallTime(), IsSwimming(), IsFlying(), GetUnitSpeed("player") > 0
         local flaskBuff                                     = getBuffRemain("player",br.player.flask.wod.buff.agilityBig)
         local friendly                                      = UnitIsFriend("target", "player")
@@ -178,6 +180,7 @@ local function runRotation()
         local inCombat                                      = br.player.inCombat
         local inInstance                                    = br.player.instance=="party"
         local inRaid                                        = br.player.instance=="raid"
+        local item                                          = br.player.spell.items
         local lastSpell                                     = lastSpellCast
         local level                                         = br.player.level
         local lootDelay                                     = getOptionValue("LootDelay")
@@ -187,18 +190,19 @@ local function runRotation()
         -- local multidot                                      = (useCleave() or br.player.mode.rotation ~= 3)
         local perk                                          = br.player.perk
         local php                                           = br.player.health
-        local power, powmax, powgen, powerDeficit           = br.player.power.amount.maelstrom, br.player.power.maelstrom.max, br.player.power.regen, br.player.power.maelstrom.deficit
+        local power, powmax, powgen, powerDeficit           = br.player.power.maelstrom.amount(), br.player.power.maelstrom.max(), br.player.power.maelstrom.regen(), br.player.power.maelstrom.deficit()
         local pullTimer                                     = br.DBM:getPulltimer()
         local racial                                        = br.player.getRacial()
-        local recharge                                      = br.player.recharge
         local solo                                          = br.player.instance=="none"
         local spell                                         = br.player.spell
         local t19pc4                                        = TierScan("T19") >= 4
         local t20pc2                                        = TierScan("T20") >= 2
         local talent                                        = br.player.talent
         local ttd                                           = getTTD
-        local ttm                                           = br.player.power.ttm
+        local ttm                                           = br.player.power.maelstrom.ttm()
         local units                                         = units or {}
+        local use                                           = br.player.use
+
         
         units.dyn8 = br.player.units(8)
         units.dyn10 = br.player.units(10)
@@ -221,6 +225,8 @@ local function runRotation()
         if crashingStormTimer == nil then crashingStormTimer = 0 end
         if lastSpell == spell.crashLightning then crashLightningCastTime = GetTime() + 6 end
         if crashLightningCastTime > GetTime() then crashingStormTimer = crashLightningCastTime - GetTime() else crashLightningCastTime = 0; crashingStormTimer = 0 end
+
+        -- ChatOverlay(tostring(cd.doomWinds.remain()))
 
 -----------------
 --- Variables ---
@@ -389,7 +395,7 @@ local function runRotation()
                             if cast.hex(thisUnit) then return end
                         end
         -- Lightning Surge Totem
-                        if isChecked("Lightning Surge Totem") and cd.windShear > gcd then
+                        if isChecked("Lightning Surge Totem") and cd.windShear.remain() > gcd then
                             if hasThreat(thisUnit) and not isMoving(thisUnit) and ttd(thisUnit) > 7 then
                                 if cast.lightningSurgeTotem(thisUnit,"ground") then return end
                             end
@@ -440,17 +446,19 @@ local function runRotation()
                 if isChecked("Feral Spirit") then
                     if cast.feralSpirit() then return end
                 end
+            end
         -- Doom Winds
-                -- doom_winds,if=cooldown.ascendance.remains>6|talent.boulderfist.enabled|debuff.earthen_spike.up
-                if (getOptionValue("Artifact") == 1 or (getOptionValue("Artifact") == 2 and useCDs())) and getDistance("target") < 5 then
-                    if cd.ascendance > 6 or talent.boulderfist or debuff.earthenSpike.exists(units.dyn5) then
-                        if cast.doomWinds() then return end
-                    end
+            -- doom_winds,if=cooldown.ascendance.remains>6|talent.boulderfist.enabled|debuff.earthen_spike.up
+            if (getOptionValue("Artifact") == 1 or (getOptionValue("Artifact") == 2 and useCDs())) and getDistance("target") < 5 then
+                if ((getOptionValue("Artifact") == 1 and not isBoss()) or not isChecked("Ascencance") or cd.ascendance.remain() > 6) or talent.boulderfist or debuff.earthenSpike.exists(units.dyn5) then
+                    if cast.doomWinds() then return end
                 end
+            end
+            if useCDs() and getDistance("target") < 5 then
         -- Ascendance
                 -- ascendance,if=(cooldown.strike.remains>0)&buff.ascendance.down
                 if isChecked("Ascendance") then
-                    if cd.stormstrike > 0 and not buff.ascendance.exists() then
+                    if cd.stormstrike.remain() > 0 and not buff.ascendance.exists() then
                         if cast.ascendance() then return end
                     end
                 end
@@ -471,7 +479,7 @@ local function runRotation()
         -- Doom Winds
             -- doom_winds,if=cooldown.windstrike.up
             if (getOptionValue("Artifact") == 1 or (getOptionValue("Artifact") == 2 and useCDs())) and getDistance("target") < 5 then
-                if cd.windstrike == 0 then
+                if cd.windstrike.remain() == 0 then
                     if cast.doomWinds() then return end
                 end
             end
@@ -492,8 +500,8 @@ local function runRotation()
                 if cast.furyOfAir() then return end
             end
         -- Crash Lightning
-            -- crash_lightning,if=artifact.alpha_wolf.rank&prev_gcd.1.feral_spirit
-            if artifact.alphaWolf and lastSpell == spell.feralSpirit then
+            -- crash_lightning,if=artifact.alpha_wolf.rank()&prev_gcd.1.feral_spirit
+            if artifact.alphaWolf.enabled() and lastSpell == spell.feralSpirit then
                 if cast.crashLightning() then return end
             end
         -- Flametongue
@@ -508,12 +516,12 @@ local function runRotation()
             end
         -- Flametongue
             -- flametongue,if=buff.flametongue.remains<6+gcd&cooldown.doom_winds.remains<gcd*2
-            if buff.flametongue.remain() < 6 + gcd and cd.doomWinds < gcd * 2 then
+            if buff.flametongue.remain() < 6 + gcd and cd.doomWinds.remain() < gcd * 2 then
                 if cast.flametongue() then return end
             end
         -- Frostbrand
             -- frostbrand,if=talent.hailstorm.enabled&buff.frostbrand.remains<6+gcd&cooldown.doom_winds.remains<gcd*2
-            if talent.hailstorm and buff.frostbrand.remain() < 6 + gcd and cd.doomWinds < gcd * 2 then
+            if talent.hailstorm and buff.frostbrand.remain() < 6 + gcd and cd.doomWinds.remain() < gcd * 2 then
                 if cast.frostbrand() then return end
             end
         end -- End Action List - Buffs
@@ -644,17 +652,20 @@ local function runRotation()
             if not inCombat and not (IsFlying() or IsMounted()) then
             -- Flask / Crystal
                 -- flask,type=flask_of_the_seventh_demon
-                if isChecked("Flask / Crystal") then
-                    if inRaid and canFlask and flaskBuff==0 and not UnitBuffID("player",188033) then
-                        useItem(br.player.flask.wod.agilityBig)
-                        return true
-                    end
-                    if flaskBuff==0 then
-                        if not UnitBuffID("player",188033) and canUse(118922) then --Draenor Insanity Crystal
-                            useItem(118922)
-                            return true
-                        end
-                    end
+                if getOptionValue("Elixir") == 1 and inRaid and not buff.flaskOfTheSeventhDemon.exists() and canUse(item.flaskOfTheSeventhDemon) then
+                    if buff.whispersOfInsanity.exists() then buff.whispersOfInsanity.cancel() end
+                    if buff.felFocus.exists() then buff.felFocus.cancel() end
+                    if use.flaskOfTheSeventhDemon() then return end
+                end
+                if getOptionValue("Elixir") == 2 and not buff.felFocus.exists() and canUse(item.repurposedFelFocuser) then
+                    if buff.flaskOfTheSeventhDemon.exists() then buff.flaskOfTheSeventhDemon.cancel() end
+                    if buff.whispersOfInsanity.exists() then buff.whispersOfInsanity.cancel() end
+                    if use.repurposedFelFocuser() then return end
+                end
+                if getOptionValue("Elixir") == 3 and not buff.whispersOfInsanity.exists() and canUse(item.oraliusWhisperingCrystal) then
+                    if buff.flaskOfTheSeventhDemon.exists() then buff.flaskOfTheSeventhDemon.cancel() end
+                    if buff.felFocus.exists() then buff.felFocus.cancel() end
+                    if use.oraliusWhisperingCrystal() then return end
                 end
             -- Lightning Shield
                 -- /lightning_shield
@@ -675,7 +686,7 @@ local function runRotation()
                     end
             -- Lightning Bolt
                     if getDistance("target") >= 10 and isChecked("Lightning Bolt Out of Combat") and not talent.overcharge
-                        and (not isChecked("Feral Lunge") or not talent.feralLunge or cd.feralLunge > gcd or not castable.feralLunge)
+                        and (not isChecked("Feral Lunge") or not talent.feralLunge or cd.feralLunge.remain() > gcd or not castable.feralLunge)
                     then
                         if cast.lightningBolt("target") then return end
                     end
@@ -762,7 +773,7 @@ local function runRotation()
                     end
             -- Boulderfist
                     -- if BuffRemainingSec(BoulderfistEnhance) <= GlobalCooldownSec or ChargesRemaining(Boulderfist) = SpellCharges(Boulderfist)
-                    if buff.boulderfist.remain() <= gcd or charges.boulderfist == charges.max.boulderfist then
+                    if buff.boulderfist.remain() <= gcd or charges.boulderfist.count() == charges.boulderfist.max() then
                         if cast.boulderfist() then return end
                     end
             -- Rockbiter
@@ -798,7 +809,7 @@ local function runRotation()
                     if cast.stormstrike() then return end
             -- Crash Lightning
                     -- if (HasTalent(CrashingStorm) and TimerSecRemaining(CrashingStormTimer) = 0) or TargetsInRadius(CrashLightning) > 3 or (ArtifactTraitRank(GatheringStorms) > 0 and not HasBuff(GatheringStorms))
-                    if (talent.crashingStorm and crashingStormTimer == 0) or getEnemiesInCone(7,100) > 3 or (artifact.gatheringStorms and not buff.gatheringStorms.exists()) then
+                    if (talent.crashingStorm and crashingStormTimer == 0) or getEnemiesInCone(7,100) > 3 or (artifact.gatheringStorms.enabled() and not buff.gatheringStorms.exists()) then
                         if cast.crashLightning() then return end
                     end
             -- Flame Tongue
@@ -834,7 +845,8 @@ local function runRotation()
                 end
             end --End In Combat
         end --End Rotation Logic
-    end -- End Timer
+        -- br.debug.cpu.cBuilder.profile = debugprofilestop()-startTime or 0
+    -- end -- End Timer
 end -- End runRotation
 local id = 263
 if br.rotations[id] == nil then br.rotations[id] = {} end

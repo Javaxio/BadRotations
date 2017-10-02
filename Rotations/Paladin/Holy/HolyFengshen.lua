@@ -56,6 +56,8 @@ local function createOptions()
 		section = br.ui:createSection(br.ui.window.profile,  "General")
 		--    br.ui:createCheckbox(section, "Boss Helper")
 		br.ui:createCheckbox(section,"OOC Healing","|cff15FF00Enables|cffFFFFFF/|cffD60000Disables |cffFFFFFFout of combat healing|cffFFBB00.",1)
+		-- Necrotic Rot
+		br.ui:createSpinner (section, "Necrotic Rot", 30, 0, 100, 1, "","|cffFFFFFFNecrotic Rot Stacks does not healing the unit", true)
 		-- Mastery bonus
 		br.ui:createCheckbox(section,"Mastery bonus","|cff15FF00Give priority to the nearest player...(Only in Raid effective)")
 		-- Blessing of Freedom
@@ -102,7 +104,7 @@ local function createOptions()
 		-------------------------
 		section = br.ui:createSection(br.ui.window.profile, "Cool Downs")
 		-- The Deceiver's Grand Design
-		br.ui:createCheckbox(section, "The Deceiver's Grand Design")
+		br.ui:createDropdown(section, "The Deceiver's Grand Design" , {"|cffFFFFFFTanks","|cffFFFFFFTanks/Healer"}, 1, "|cffFFFFFFTarget for The Deceiver's Grand Design")
 		-- Archive of Faith
 		br.ui:createSpinner(section, "Archive of Faith", 50, 0, 100, 5, "","|cffFFFFFFTanks Health Percent to Cast At")		
 		-- Trinkets
@@ -207,6 +209,7 @@ end
 --- ROTATION ---
 ----------------
 local healing_obj = nil
+local BOV = nil
 
 local function runRotation()
 	if br.timer:useTimer("debugHoly", 0.1) then --change "debugFury" to "debugSpec" (IE: debugFire)
@@ -236,8 +239,8 @@ local function runRotation()
 		-- local lowest                                        = br.friend[1]
 		-- local mana                                          = br.player.powerPercentMana
 		-- local perk                                          = br.player.perk
-		-- local power, powmax, powgen                         = br.player.power.amount.mana, br.player.power.mana.max, br.player.power.regen
-		-- local ttm                                           = br.player.power.ttm
+		-- local power, powmax, powgen                         = br.player.power.mana.amount(), br.player.power.mana.max(), br.player.power.mana.regen()
+		-- local ttm                                           = br.player.power.mana.ttm()
 		--------------
 		-- Player
 		--------------
@@ -248,13 +251,12 @@ local function runRotation()
 		local talent                                        = br.player.talent
 		local charges                                       = br.player.charges
 		local debuff                                        = br.player.debuff
-		local drinking                                      = UnitBuff("player",192002) ~= nil or UnitBuff("player",167152) ~= nil or UnitBuff("player",192001) ~= nil
+		local drinking                                      = getBuffRemain("player",192002) == 0 or getBuffRemain("player",167152) == 0 or getBuffRemain("player",192001) == 0
 		local inCombat                                      = br.player.inCombat
 		local inInstance                                    = br.player.instance=="party"
 		local inRaid                                        = br.player.instance=="raid"
 		local race                                          = br.player.race
 		local racial                                        = br.player.getRacial()
-		local recharge                                      = br.player.recharge
 		-------------
 		-- Raid
 		-------------
@@ -310,11 +312,11 @@ local function runRotation()
 		-- local tHp                                           = 95
 		-- local averageHealth                                 = 100
 		
-		if leftCombat == nil then leftCombat = GetTime() end
-		if profileStop == nil then profileStop = false end	
-    	if isChecked("Beacon of Virtue") and talent.beaconOfVirtue and not IsMounted() and ((getHP(BOV) ~= 0 and isCastingSpell(spell.flashOfLight)) or (getLowAllies(getValue("Beacon of Virtue")) >= getValue("BoV Targets") and isMoving("player") and GetSpellCooldown(20473) == 0)) then
-    		CastSpellByName(GetSpellInfo(200025),lowest.unit)
-    	end			
+    	if isChecked("Beacon of Virtue") and talent.beaconOfVirtue and not IsMounted() then
+    	    if (BOV ~= nil and isCastingSpell(spell.flashOfLight)) or (getLowAllies(getValue("Beacon of Virtue")) >= getValue("BoV Targets") and isMoving("player") and GetSpellCooldown(200025) == 0 and GetSpellCooldown(20473) == 0) then
+    		    if CastSpellByName(GetSpellInfo(200025),lowest.unit) then BOV = nil return end
+    		end	
+    	end		
 		--------------------
 		--- Action Lists ---
 		--------------------
@@ -324,7 +326,7 @@ local function runRotation()
 				if getHP(healing_obj) >= getValue("Overhealing Cancel") and (isCastingSpell(spell.flashOfLight) or isCastingSpell(spell.holyLight)) then
 					SpellStopCasting()
 					healing_obj = nil
-					Print("Cancel casting...")
+					-- Print("Cancel casting...")
 				end
 			end
 		end
@@ -338,7 +340,7 @@ local function runRotation()
     			if lowest.hp <= 90 then
     			    if cast.holyShock(lowest.unit) then return end
     			end	
-    			if lowest.hp <= 90 and getBuffRemain("player",234862) > 0.1 then 
+    			if lowest.hp <= 90 and getBuffRemain("player",234862) ~= 0 then 
     			    if cast.lightOfTheMartyr(lowest.unit) then return end
     			end	
     			if lowest.hp <= 90 then 
@@ -410,18 +412,22 @@ local function runRotation()
 				if cast.contemplation() then return end
 			end
     		-- Blessing of Freedom
-    		for i = 1, #br.friend do
-    		    if getDebuffRemain(br.friend[i].unit,202615) > 1 or getDebuffRemain(br.friend[i].unit,211543) > 1 then
-    			    if cast.blessingOfFreedom(br.friend[i].unit) then return end
-    			end
-    		end 
+   			if GetSpellCooldown(1044) == 0 then
+           		for i = 1, #br.friend do
+          		    if getDebuffRemain(br.friend[i].unit,202615) > 1 or getDebuffRemain(br.friend[i].unit,211543) > 1 then
+          			    if cast.blessingOfFreedom(br.friend[i].unit) then return end
+          			end
+          		end
+          	end	
 			-- Blessing of Protection
-			for i = 1, #br.friend do
-				if getDebuffRemain(br.friend[i].unit,237726) > 1 or getDebuffRemain(br.friend[i].unit,196838) > 1 then
-					if cast.blessingOfProtection(br.friend[i].unit) then return end
-				end
-			end
-		end
+			if GetSpellCooldown(1022) == 0 then
+    			for i = 1, #br.friend do
+    				if getDebuffRemain(br.friend[i].unit,237726) > 1 or getDebuffRemain(br.friend[i].unit,196838) > 1 then
+    					if cast.blessingOfProtection(br.friend[i].unit) then return end
+    				end
+    			end
+    		end
+    	end	
 		local function Cleanse()
 			-- Cleanse
 			if br.player.mode.cleanse == 1 then
@@ -544,7 +550,7 @@ local function runRotation()
 				-- Crusader Strike
 				if isChecked("Crusader Strike") and talent.crusadersMight and GetSpellCooldown(20473) > 1 then
 					if cast.crusaderStrike(units.dyn5) then return end
-				elseif isChecked("Crusader Strike") and not talent.crusadersMight and (charges.crusaderStrike == 2 or debuff.judgement.exists(units.dyn5) or (charges.crusaderStrike >= 1 and recharge.crusaderStrike < 3)) then
+				elseif isChecked("Crusader Strike") and not talent.crusadersMight and (charges.crusaderStrike.count() == 2 or debuff.judgement.exists(units.dyn5) or (charges.crusaderStrike.count() >= 1 and charge.crusaderStrike.recharge() < 3)) then
 					if cast.crusaderStrike(units.dyn5) then return end
 				end
 			end
@@ -554,14 +560,14 @@ local function runRotation()
 		----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		local function Cooldowns()
 			-- Lay on Hands
-			if isChecked("Lay on Hands") and GetSpellCooldown(633) == 0 then
+			if isChecked("Lay on Hands") then
 				for i = 1, #br.friend do
 					if getOptionValue("Lay on Hands Target") == 1 then
-						if br.friend[i].hp <= getValue ("Lay on Hands") and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+						if br.friend[i].hp <= getValue ("Lay on Hands") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 							if cast.layOnHands(br.friend[i].unit) then return end
 						end
 					elseif getOptionValue("Lay on Hands Target") == 2 then
-						if br.friend[i].hp <= getValue ("Lay on Hands") and UnitGroupRolesAssigned(br.friend[i].unit) == "TANK" and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+						if br.friend[i].hp <= getValue ("Lay on Hands") and UnitGroupRolesAssigned(br.friend[i].unit) == "TANK" and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 							if cast.layOnHands(br.friend[i].unit) then return end
 						end
 					elseif getOptionValue("Lay on Hands Target") == 3 then
@@ -594,7 +600,7 @@ local function runRotation()
 				end
 			end
 			-- Blessing of Sacrifice
-			if isChecked("Blessing of Sacrifice") and GetSpellCooldown(6940) == 0 then
+			if isChecked("Blessing of Sacrifice") then
 				for i = 1, #br.friend do
 					if getOptionValue("BoS Target") == 1 then
 						if br.friend[i].hp <= getValue ("Blessing of Sacrifice") and not UnitIsUnit(br.friend[i].unit,"player") then
@@ -620,10 +626,16 @@ local function runRotation()
 				end
 			end
 			-- The Deceiver's Grand Design
-			if isChecked("The Deceiver's Grand Design") then
+			if isChecked("The Deceiver's Grand Design") and hasEquiped(147007) and canUse(147007) then
 				for i = 1, #br.friend do
-					if hasEquiped(147007) and canUse(147007) and getBuffRemain(br.friend[i].unit,242622) == 0 and UnitGroupRolesAssigned(br.friend[i].unit) == "TANK" and UnitInRange(br.friend[i].unit) and not UnitIsDeadOrGhost(br.friend[i].unit) then
-						UseItemByName(147007,br.friend[i].unit)
+					if getOptionValue("The Deceiver's Grand Design") == 1 then
+						if getBuffRemain(br.friend[i].unit,242622) == 0 and UnitGroupRolesAssigned(br.friend[i].unit) == "TANK" and UnitInRange(br.friend[i].unit) and not UnitIsDeadOrGhost(br.friend[i].unit) then
+						    UseItemByName(147007,br.friend[i].unit)
+						end	
+					elseif getOptionValue("The Deceiver's Grand Design") == 2 then
+					        if getBuffRemain(br.friend[i].unit,242622) == 0 and (UnitGroupRolesAssigned(br.friend[i].unit) == "TANK" or UnitGroupRolesAssigned(br.friend[i].unit) == "HEALER") and UnitInRange(br.friend[i].unit) and not UnitIsDeadOrGhost(br.friend[i].unit) then
+							UseItemByName(147007,br.friend[i].unit)
+						end	
 					end
 				end
 			end
@@ -740,7 +752,7 @@ local function runRotation()
 					end
 				end
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue("Cloak LotM") and getBuffRemain("player",234862) ~= 0 and not UnitIsUnit(br.friend[i].unit,"player") and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					if br.friend[i].hp <= getValue("Cloak LotM") and getBuffRemain("player",234862) ~= 0 and not UnitIsUnit(br.friend[i].unit,"player") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.lightOfTheMartyr(br.friend[i].unit) then return end
 					end
 				end
@@ -779,11 +791,11 @@ local function runRotation()
 					if cast.holyShock("player") then return end
 				end
 				if #tanks > 0 then
-					if tanks[1].hp <= getValue("Critical HP") and getDebuffStacks(tanks[1].unit,209858) < 25 then
+					if tanks[1].hp <= getValue("Critical HP") and getDebuffStacks(tanks[1].unit,209858) < getValue("Necrotic Rot") then
 						if cast.holyShock(tanks[1].unit) then return end
 					end
 				end
-				if br.friend[1].hp <= getValue("Critical HP") and getDebuffStacks(br.friend[1].unit,209858) < 25 then
+				if br.friend[1].hp <= getValue("Critical HP") and getDebuffStacks(br.friend[1].unit,209858) < getValue("Necrotic Rot") then
 					if cast.holyShock(br.friend[1].unit) then return end
 				end
 				if inRaid and isChecked("Mastery bonus") then
@@ -807,7 +819,7 @@ local function runRotation()
 					end
 				end
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue("Holy Shock") and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					if br.friend[i].hp <= getValue("Holy Shock") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.holyShock(br.friend[i].unit) then return end
 					end
 				end
@@ -823,7 +835,7 @@ local function runRotation()
 			-- Light of Martyr
 			if isChecked("Light of the Martyr") and php >= getOptionValue("LotM player HP limit") then
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue ("Light of the Martyr") and not UnitIsUnit(br.friend[i].unit,"player") and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					if br.friend[i].hp <= getValue ("Light of the Martyr") and not UnitIsUnit(br.friend[i].unit,"player") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.lightOfTheMartyr(br.friend[i].unit) then return end
 					end
 				end
@@ -834,20 +846,20 @@ local function runRotation()
 					if cast.flashOfLight("player") then return end
 				end
 				if #tanks > 0 then
-					if tanks[1].hp <= getValue("Critical HP") and getDebuffStacks(tanks[1].unit,209858) < 25 then
+					if tanks[1].hp <= getValue("Critical HP") and getDebuffStacks(tanks[1].unit,209858) < getValue("Necrotic Rot") then
 						if cast.flashOfLight(tanks[1].unit) then healing_obj = tanks[1].unit return end
 					end
 				end
-				if br.friend[1].hp <= getValue("Critical HP") and getDebuffStacks(br.friend[1].unit,209858) < 25 then
+				if br.friend[1].hp <= getValue("Critical HP") and getDebuffStacks(br.friend[1].unit,209858) < getValue("Necrotic Rot") then
 					if cast.flashOfLight(br.friend[1].unit) then healing_obj = br.friend[1].unit return end
 				end
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue("FoL Tanks") and UnitGroupRolesAssigned(br.friend[i].unit) == "TANK" and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					if br.friend[i].hp <= getValue("FoL Tanks") and UnitGroupRolesAssigned(br.friend[i].unit) == "TANK" and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.flashOfLight(br.friend[i].unit) then healing_obj = br.friend[i].unit return end
 					end
 				end
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue("Flash of Light") and getBuffRemain(br.friend[i].unit,200654) > 1.5 and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					if br.friend[i].hp <= getValue("Flash of Light") and getBuffRemain(br.friend[i].unit,200654) > 1.5 and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.flashOfLight(br.friend[i].unit) then healing_obj = br.friend[i].unit return end
 					end
 				end				
@@ -875,9 +887,9 @@ local function runRotation()
 					end
 				end
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue("FoL Infuse") and getDebuffStacks(br.friend[i].unit,209858) < 25 and buff.infusionOfLight.remain("player") > 1.5 then
+					if br.friend[i].hp <= getValue("FoL Infuse") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") and buff.infusionOfLight.remain("player") > 1.5 then
 						if cast.flashOfLight(br.friend[i].unit) then healing_obj = br.friend[i].unit return end
-					elseif br.friend[i].hp <= getValue("Flash of Light") and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					elseif br.friend[i].hp <= getValue("Flash of Light") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.flashOfLight(br.friend[i].unit) then healing_obj = br.friend[i].unit return end						
 					end
 				end
@@ -902,7 +914,7 @@ local function runRotation()
 					end
 				end
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue ("Bestow Faith") and not UnitIsUnit(br.friend[i].unit,"player") and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					if br.friend[i].hp <= getValue ("Bestow Faith") and not UnitIsUnit(br.friend[i].unit,"player") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.lightOfTheMartyr(br.friend[i].unit) then return end
 					end
 				end
@@ -932,7 +944,7 @@ local function runRotation()
 					end
 				end
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue("Holy Light") and br.friend[i].hp >= getValue("Critical HP") and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					if br.friend[i].hp <= getValue("Holy Light") and br.friend[i].hp >= getValue("Critical HP") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.holyLight(br.friend[i].unit) then healing_obj = br.friend[i].unit return end
 					end
 				end
@@ -940,11 +952,11 @@ local function runRotation()
 			-- Moving Martyr
 			if isChecked("Moving LotM") and isMoving("player") and php >= getOptionValue("LotM player HP limit") then
 				if #tanks > 0 then
-					if tanks[1].hp <= getValue("Critical HP") and getDebuffStacks(tanks[1].unit,209858) < 25 then
+					if tanks[1].hp <= getValue("Critical HP") and getDebuffStacks(tanks[1].unit,209858) < getValue("Necrotic Rot") then
 						if cast.lightOfTheMartyr(tanks[1].unit) then return end
 					end
 				end
-				if br.friend[1].hp <= getValue("Critical HP") and not UnitIsUnit(br.friend[1].unit,"player") and getDebuffStacks(br.friend[1].unit,209858) < 25 then
+				if br.friend[1].hp <= getValue("Critical HP") and not UnitIsUnit(br.friend[1].unit,"player") and getDebuffStacks(br.friend[1].unit,209858) < getValue("Necrotic Rot") then
 					if cast.lightOfTheMartyr(br.friend[1].unit) then return end
 				end
 				if inRaid and isChecked("Mastery bonus") then
@@ -965,29 +977,32 @@ local function runRotation()
 					end
 				end
 				for i = 1, #br.friend do
-					if br.friend[i].hp <= getValue("Moving LotM") and not UnitIsUnit(br.friend[i].unit,"player") and getDebuffStacks(br.friend[i].unit,209858) < 25 then
+					if br.friend[i].hp <= getValue("Moving LotM") and not UnitIsUnit(br.friend[i].unit,"player") and getDebuffStacks(br.friend[i].unit,209858) < getValue("Necrotic Rot") then
 						if cast.lightOfTheMartyr(br.friend[i].unit) then return end
 					end
 				end
 			end
 			-- Crusader Strike
 			if not UnitIsFriend("target", "player") then
-				if talent.crusadersMight and GetSpellCooldown(20473) > 1 then
-					if cast.crusaderStrike("target") then return end
-				elseif talent.crusadersMight and GetSpellCooldown(85222) > 1 then
-					if cast.crusaderStrike("target") then return end
-				end
-			-- Judgement				
-				if talent.fistOfJustice and GetSpellCooldown(853) > 0 then
-					if cast.judgment(units.dyn30) then return end
-				end	
-			end			
-		end
+    			if isChecked("Crusader Strike") then
+    				if talent.crusadersMight and GetSpellCooldown(20473) > 1 then
+    					if cast.crusaderStrike(units.dyn5) then return end
+    				elseif talent.crusadersMight and GetSpellCooldown(85222) > 1 then
+    					if cast.crusaderStrike(units.dyn5) then return end
+    				end
+    			end	
+			-- Judgement
+			    if isChecked("Judgement") then
+    				if talent.fistOfJustice and GetSpellCooldown(853) > 1 then
+    					if cast.judgment(units.dyn30) then return end
+    				end	
+    			end			
+    		end
+    	end	
 		---------------------------------
 		--- Out Of Combat - Rotations ---
 		---------------------------------
-		if not inCombat and (not IsMounted() or buff.divineSteed.exists()) and (not isCastingSpell(spell.redemption) or not isCastingSpell(spell.absolution)) and not drinking
-			and not isCastingSpell(spell.redemption) and not isCastingSpell(spell.absolution) then
+		if not inCombat and (not IsMounted() or buff.divineSteed.exists()) and not isCastingSpell(spell.redemption) and not isCastingSpell(spell.absolution) and drinking and not UnitDebuffID("player",188030) then
 			PrePull()
 			CanIRess()
 			Cleanse()
@@ -1000,8 +1015,7 @@ local function runRotation()
 		-----------------------------
 		--- In Combat - Rotations ---
 		-----------------------------
-		if inCombat and (not IsMounted() or buff.divineSteed.exists()) and (not isCastingSpell(spell.redemption) or not isCastingSpell(spell.absolution)) and not drinking
-			and not isCastingSpell(spell.redemption) and not isCastingSpell(spell.absolution) then
+		if inCombat and (not IsMounted() or buff.divineSteed.exists()) and not isCastingSpell(spell.redemption) and not isCastingSpell(spell.absolution) and drinking and not UnitDebuffID("player",188030) then
 			BossEncounterCase()
 			AuraOfSacrificeLogic()
 			overhealingcancel()

@@ -1,63 +1,22 @@
 function getDistance(Unit1,Unit2,option)
     local currentDist = 100
-    local testSpell = nil
-    local meleeSpec = false
-  --   if testSpell == nil then
-  --   	if select(2,UnitClass("player")) == "WARRIOR" then
-  --   		testSpell = select(1,GetSpellInfo(6552))
-  --   		meleeSpec = true
-  --   	elseif select(2,UnitClass("player")) == "PALADIN" then
-  --   		testSpell = select(1,GetSpellInfo(35395))
-  --   		meleeSpec = true
-		-- elseif select(2,UnitClass("player")) == "ROGUE" then
-		-- 	testSpell = select(1,GetSpellInfo(1766))    		
-		-- 	meleeSpec = true
-  --   	elseif select(2,UnitClass("player")) == "DEATHKNIGHT" then
-  --   		testSpell = select(1,GetSpellInfo(49998))
-  --   		meleeSpec = true
-  --   	elseif select(2,UnitClass("player")) == "SHAMAN" and select(1,GetSpecializationInfo(GetSpecialization())) == 263 then
-  --   		testSpell = select(1,GetSpellInfo(17364))
-  --   		meleeSpec = true
-  --   	elseif select(2,UnitClass("player")) == "MONK" then
-  --   		testSpell = select(1,GetSpellInfo(100780))
-  --   		meleeSpec = true
-  --   	elseif select(2,UnitClass("player")) == "DRUID" then
-  --   		if (GetShapeshiftForm()==1 or GetShapeshiftForm()==3) then
-  --   			testSpell = select(1,GetSpellInfo(106832))
-  --   			meleeSpec = true
-  --   		else
-  --   			meleeSpec = false
-  --   		end
-		-- elseif select(2,UnitClass("player")) == "DEMONHUNTER" and select(1,GetSpecializationInfo(GetSpecialization())) == 577 then
-  --   		testSpell = select(1,GetSpellInfo(162794))   
-  --   		meleeSpec = true
-  --   	elseif select(2,UnitClass("player")) == "DEMONHUNTER" and select(1,GetSpecializationInfo(GetSpecialization())) == 581 then
-  --   		testSpell = select(1,GetSpellInfo(214743))   
-  --   		meleeSpec = true
-  --  		elseif select(2,UnitClass("player")) == "HUNTER" and select(1,GetSpecializationInfo(GetSpecialization())) == 255 then
-  --   		testSpell = select(1,GetSpellInfo(185855))   
-  --   		meleeSpec = true
-  --   	end 		
-  --   end
     -- If Unit2 is nil we compare player to Unit1
     if Unit2 == nil then
         Unit2 = Unit1
         Unit1 = "player"
     end
-    -- Modifier for Balance Affinity range change
+    -- Modifier for Balance Affinity range change (Druid - Not Balance)
     if rangeMod == nil then rangeMod = 0 end
     if br.player ~= nil then
         if br.player.talent.balanceAffinity ~= nil then
-            if br.player.talent.balanceAffinity then
+            if br.player.talent.balanceAffinity and option ~= "noMod" then
                 rangeMod = 5
-            else
-                rangeMod = 0
             end
         end
     end
     -- Check if objects exists and are visible
-    if GetObjectExists(Unit1) and GetUnitIsVisible(Unit1) == true
-        and GetObjectExists(Unit2) and GetUnitIsVisible(Unit2) == true
+    if GetObjectExists(Unit1) and GetUnitIsVisible(Unit1) == true 
+        and GetObjectExists(Unit2) and GetUnitIsVisible(Unit2) == true 
     then
     -- Get the distance
         local X1,Y1,Z1 = GetObjectPosition(Unit1)
@@ -80,11 +39,11 @@ function getDistance(Unit1,Unit2,option)
         if option == "dist3" then return dist3 end
         if option == "dist4" then return dist4 end
         if GetSpecializationInfo(GetSpecialization()) == 255 then
-        	if dist > meleeRange then
-        		currentDist = dist
-        	else
-        		currentDist = 0
-        	end
+            if dist > meleeRange then
+                currentDist = dist
+            else
+                currentDist = 0
+            end
         elseif dist > 13 then
             currentDist = dist
         elseif dist2 > 8 and dist3 > 8 then
@@ -96,13 +55,13 @@ function getDistance(Unit1,Unit2,option)
         else
             currentDist = 0
         end
-        -- if not EWT and meleeSpec then
-        	-- if IsSpellInRange(testSpell,Unit2) == 1 then
-        	-- 	currentDist = 4
-        	-- end
-        -- end
     end
-    return currentDist
+    -- Modifier for Mastery: Sniper Training (Hunter - Marksmanship)
+    if currentDist < 100 and isKnown(193468) and option ~= "noMod" then
+        return currentDist - (currentDist * 0.12)
+    else
+        return currentDist
+    end
 end
 function isInRange(spellID,unit)
 	return LibStub("SpellRange-1.0").IsSpellInRange(spellID,unit)
@@ -160,7 +119,7 @@ function getTotemDistance(Unit1)
 
   if GetUnitIsVisible(Unit1) then
     -- local objectCount = GetObjectCount() or 0
-    for i = 1, ObjectCount() do
+    for i = 1,GetObjectCount() do
       if UnitIsUnit(UnitCreator(ObjectWithIndex(i)), "Player") and (UnitName(ObjectWithIndex(i)) == "Searing Totem" or UnitName(ObjectWithIndex(i)) == "Magma Totem") then
         X2,Y2,Z2 = GetObjectPosition(GetObjectIndex(i))
       end

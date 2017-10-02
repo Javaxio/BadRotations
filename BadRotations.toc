@@ -1,4 +1,4 @@
-## Interface: 70200
+## Interface: 70300
 ## Title: |cffa330c9BadRotations
 ## Notes: |cffa330c9By CuteOne.
 ## Author: CuteOne
@@ -11,9 +11,9 @@ misc.xml
 
 ## System
 
+System\Unlockers.lua
 System\Core.lua
 System\Debugging.lua
-System\GeneralFunctions.lua
 System\LootManager.lua
 System\UsefulFeatures.lua
 System\SlashCommands.lua
@@ -44,7 +44,6 @@ Libs\LibStub\LibStub.lua
 Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
 Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 
-Libs\DiesalComm-1.0\DiesalComm-1.0.xml
 Libs\DiesalTools-1.0\DiesalTools-1.0.lua
 Libs\DiesalStyle-1.0\DiesalStyle-1.0.lua
 Libs\DiesalGUI-1.0\DiesalGUI-1.0.xml
@@ -97,7 +96,6 @@ System\UI\Windows\Debug.lua
 System\UI\Windows\Healing.lua
 System\UI\Windows\Help.lua
 System\UI\Windows\Profile.lua
-System\UI\Windows\Settings.lua
 
 ## Rotation
 
@@ -136,10 +134,11 @@ Rotations\Druid\Balance\BalanceLyLoLoq.lua
 
 ## Hunter ---------------------------------------------------
 
-## Rotations\Hunter\Beastmaster\BeastmasterCpoworks.lua
+Rotations\Hunter\Beastmaster\BeastmasterCuteOne.lua
 Rotations\Hunter\Beastmaster\BeastmasterKuukuu.lua
+Rotations\Hunter\Beastmaster\BeastmasterArh.lua
 
-## Rotations\Hunter\Marksmanship\MarksmanshipCpoworks.lua
+Rotations\Hunter\Marksmanship\MarksmanshipCuteOne.lua
 Rotations\Hunter\Marksmanship\MarksmanshipAura.lua
 
 Rotations\Hunter\Survival\SurvivalCuteOne.lua
@@ -178,16 +177,17 @@ Rotations\Priest\Discipline\DisciplineBizkut.lua
 
 ## Rotations\Priest\Holy\HolySvs.lua
 Rotations\Priest\Holy\HolyOdan.lua
-
+Rotations\Priest\Holy\HolyJR.lua
 
 Rotations\Priest\Shadow\ShadowCuteOne.lua
+Rotations\Priest\Shadow\ShadowJR.lua
 
 ## Rogue ---------------------------------------------------
 
 Rotations\Rogue\Assassination\AssassinationCuteOne.lua
 Rotations\Rogue\Assassination\AssLemon.lua
 
-## Rotations\Rogue\Outlaw\OutlawCuteOne.lua
+Rotations\Rogue\Outlaw\OutlawCuteOne.lua
 Rotations\Rogue\Outlaw\OutlawVilt.lua
 
 Rotations\Rogue\Subtlety\SubtletyCuteOne.lua

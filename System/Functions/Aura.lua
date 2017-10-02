@@ -106,7 +106,10 @@ function canDispel(Unit,spellID)
 		if spellID == 31224 then typesList = { "Poison","Curse","Disease","Magic" } end
 	end
 	if ClassNum == 5 then --Priest
+		-- Purify
 		if spellID == 527 then typesList = { "Disease", "Magic" } end
+		-- Mass Dispell
+		if spellID == 32375 then typesList = { "Magic" } end
 	end
 	if ClassNum == 6 then --Death Knight
 		typesList = { }
@@ -270,6 +273,20 @@ function getDebuffCount(spellID)
     if GetObjectExists(thisUnit) then
       -- increase counter for each occurences
       if UnitDebuffID(thisUnit,spellID,"player") then
+        counter = counter + 1
+      end
+    end
+  end
+  return tonumber(counter)
+end
+function getDebuffRemainCount(spellID,remain)
+  local counter = 0
+  for k, v in pairs(br.enemy) do
+    local thisUnit = br.enemy[k].unit
+    -- check if unit is valid
+    if GetObjectExists(thisUnit) then
+      -- increase counter for each occurences
+      if UnitDebuffID(thisUnit,spellID,"player") and getDebuffRemain(thisUnit,spellID,"player") >= remain then
         counter = counter + 1
       end
     end

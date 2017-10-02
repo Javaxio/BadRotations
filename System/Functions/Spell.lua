@@ -184,6 +184,18 @@ function getRecharge(spellID)
 		return 0
 	end
 end
+-- Full RechargeTime of a Spell/dump getFullRechargeTime(214579)
+function getFullRechargeTime(spellID)
+    local charges,maxCharges,chargeStart,chargeDuration = GetSpellCharges(spellID)
+    if charges then
+        local currentChargeTime = (charges or 0) < (maxCharges or 0) and chargeDuration - (GetTime() - (chargeStart or 0)) or 0
+        local leftChargesTotalTime = (maxCharges - charges - 1) * chargeDuration
+        if charges ~= maxCharges then
+            return currentChargeTime + leftChargesTotalTime
+        end
+    end
+    return 0
+end
 -- if getSpellCD(12345) <= 0.4 then
 function getSpellCD(SpellID)
 	if GetSpellCooldown(SpellID) == 0 then
@@ -192,20 +204,54 @@ function getSpellCD(SpellID)
 		local Start ,CD = GetSpellCooldown(SpellID)
 		local MyCD = Start + CD - GetTime()
 		MyCD = MyCD - getLatency()
+		if MyCD < 0 then MyCD = 0 end
 		return MyCD
 	end
+end
+function getSpellType(spellName)
+	if spellName == nil then return "Invalid" end
+	local helpful = IsHelpfulSpell(spellName) or false
+	local harmful = IsHarmfulSpell(spellName) or false
+	if helpful and not harmful then return "Helpful" end
+    if harmful and not helpful then return "Harmful" end
+    if helpful and harmful then return "Both" end
+    if not helpful and not harmful then return "Unknown" end
+end
+function getCastingRegen(spellID)
+	local regenRate = getRegen("player")
+	local power = 0
+
+	-- Get the "execute time" of the spell (larger of GCD or the cast time).
+	local castTime = getCastTime(spellID) or 0
+	local gcd = br.player.gcd
+	local castSeconds = (castTime > gcd) and castTime or gcd
+	power = power + regenRate * castSeconds
+
+	-- Get the amount of time remaining on the Steady Focus buff.
+	if UnitBuffID("player", 193534) ~= nil then
+		local seconds = getBuffRemain("player", 193534)
+		if seconds <= 0 then
+			seconds = 0
+		elseif seconds > castSeconds then
+			seconds = castSeconds
+		end
+		-- Steady Focus increases the focus regeneration rate by 50% for its duration.
+		power = power + regenRate * 1.5 * seconds
+	end
+	return power
 end
 -- if isKnown(106832) then
 function isKnown(spellID)
 	local spellName = GetSpellInfo(spellID)
-	if GetSpellBookItemInfo(tostring(spellName)) ~= nil then
-		return true
-	elseif IsPlayerSpell(tonumber(spellID)) == true then
-		return true
-	elseif IsSpellKnown(spellID) == true then
-		return true
-	elseif hasPerk(spellID) == true then
-        return true
-    end
-	return false
+	-- if GetSpellBookItemInfo(tostring(spellName)) ~= nil then
+	-- 	return true
+	-- elseif IsPlayerSpell(tonumber(spellID)) == true then
+	-- 	return true
+	-- elseif IsSpellKnown(spellID) == true then
+	-- 	return true
+	-- elseif hasPerk(spellID) == true then
+ --        return true
+ --    end
+	-- return false
+	return GetSpellBookItemInfo(tostring(spellName)) ~= nil or IsPlayerSpell(tonumber(spellID)) or IsSpellKnown(spellID) or hasPerk(spellID)
 end

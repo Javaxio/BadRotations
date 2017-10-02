@@ -62,6 +62,31 @@ local function updateRate()
 	print("Current Dynamic Target Rate: "..getEnemyUpdateRate())
 end
 
+local function forewardDisengage() -- from Stinky Twitch 
+	local s, d, e = GetSpellCooldown(781) 
+	if s == 0 then
+		MoveForwardStart() 
+		C_Timer.After(.10, function() 
+			MoveForwardStop() 
+			MoveBackwardStop() 
+			MoveAndSteerStop() 
+			JumpOrAscendStart() 
+			UnitSetFacing(mod(ObjectFacing("player") + math.pi, math.pi * 2))
+		end) 
+		C_Timer.After(.25, function() 
+			CastSpellByID(781) 
+		end)
+		MoveForwardStart() 
+		C_Timer.After(.30, function() 
+			MoveForwardStop() 
+			MoveBackwardStop() 
+			MoveAndSteerStop() 
+			JumpOrAscendStart() 
+			UnitSetFacing(mod(ObjectFacing("player") + math.pi, math.pi * 2))
+		end)  
+	end
+end
+
 function slashHelpList()
 	SLASH_BR1, SLASH_BR2 = '/br', '/badrotations'
 	SlashCommandHelp("br","Toggles BadRotations On/Off")
@@ -75,6 +100,9 @@ function slashHelpList()
 	SlashCommandHelp("br queue add spellId","Adds the Spell to the Queue by Spell Id.")
 	SlashCommandHelp("br queue remove spellId","Removes the Spell from the Queue by Spell Id.")
 	SlashCommandHelp("br updaterate", "Displays Current Update Rate")
+	if select(2, UnitClass("player")) == "HUNTER" then
+		SlashCommandHelp("br disengage", "Assign to macro to Forward Disengage.")
+	end
 end
 
 slashHelpList()
@@ -83,6 +111,7 @@ function handler(message, editbox)
     local msg1 = getStringIndex(message,1)
     local msg2 = getStringIndex(message,2)
 	local msg3 = getStringIndex(message,3)
+	local msg4 = getStringIndex(message,4)
 	if msg == "" or msg == nil then
 	    toggleUI()
 	-- Help
@@ -155,7 +184,7 @@ function handler(message, editbox)
 		end
 	-- Queue
 	elseif msg1 == "queue" then
-		if isChecked("Queue Casting") then
+		-- if isChecked("Queue Casting") then
 			if msg2 == "clear" then
 				if br.player.queue == nil then Print("Queue Already Cleared") end
 				if #br.player.queue == 0 then Print("Queue Already Cleared") end
@@ -165,12 +194,16 @@ function handler(message, editbox)
 					Print("No Spell Provided to add to Queue.")
 				else
 					local spellName,_,_,_,_,_,spellId = GetSpellInfo(msg3)
-					local target = msg4
+					if msg4 == nil then
+						targetUnit = getSpellUnit(spellId)
+					else
+						targetUnit = tostring(msg4)
+					end
 					if spellName == nil then
 	            		Print("Invalid Spell ID: |cffFFDD11 Unable to add.")
 	            	else
 						if #br.player.queue == 0 then
-		                    tinsert(br.player.queue,{id = spellId, name = spellName, target = queueDest})
+		                    tinsert(br.player.queue,{id = spellId, name = spellName, target = targetUnit}) --queueDest})
 		                    Print("Added |cFFFF0000"..spellName.."|r to the queue.")
 		                elseif #br.player.queue ~= 0 then
 		                    for i = 1, #br.player.queue do
@@ -178,7 +211,7 @@ function handler(message, editbox)
 		                            Print("|cFFFF0000"..spellName.."|r is already queued.")
 		                            break
 		                        else
-		                            tinsert(br.player.queue,{id = spellId, name = spellName, target = queueDest})
+		                            tinsert(br.player.queue,{id = spellId, name = spellName, target = targetUnit}) --queueDest})
 		                            Print("Added |cFFFF0000"..spellName.."|r to the queue.")
 		                            break
 		                        end
@@ -213,11 +246,13 @@ function handler(message, editbox)
 			elseif msg2 == nil then
 				Print("Invalid Option for: |cFFFF0000" .. msg1 .. "|r try |cffFFDD11 /br queue clear |r - Clears the Queue list or |cffFFDD11 /br queue add (spell)|r - Adds specified spell to Queue list or |cffFFDD11 /br queue remove (spell) |r - Removes specifid from Queue list.")
 			end
-		else
-			Print("Queue Casting Disabled: |cffFFDD11 Check Bot Options to enable.")
-		end
+		-- else
+		-- 	Print("Queue Casting Disabled: |cffFFDD11 Check Bot Options to enable.")
+		-- end
 	elseif msg == "updaterate" then
 		updateRate()
+	elseif msg == "disengage" then
+		forewardDisengage()
 	else
 	    Print("Invalid Command: |cFFFF0000" .. msg .. "|r try |cffFFDD11 /br help")
 	end

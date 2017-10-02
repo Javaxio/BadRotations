@@ -181,6 +181,25 @@ function getTimeTo(unit,percent)
 		return timeToPercent
 	end
 end
+function isIncapacitated(spellID)
+	local eventIndex = C_LossOfControl.GetNumEvents()
+	while (eventIndex > 0) do
+		local _,_,text = C_LossOfControl.GetEventInfo(eventIndex)
+		if (text == LOSS_OF_CONTROL_DISPLAY_FEAR
+			or text == LOSS_OF_CONTROL_DISPLAY_HORROR
+			or text == LOSS_OF_CONTROL_DISPLAY_STUN 
+			or text == LOSS_OF_CONTROL_DISPLAY_CHARM
+			or text == LOSS_OF_CONTROL_DISPLAY_SLEEP
+			or text == LOSS_OF_CONTROL_DISPLAY_DISORIENT
+			or text == LOSS_OF_CONTROL_DISPLAY_INCAPACITATE
+			or text == LOSS_OF_CONTROL_DISPLAY_GRIP)
+			and not hasNoControl(spellID)
+		then
+			return true
+		end
+	end
+	return false
+end
 -- if hasNoControl(12345) == true then
 function hasNoControl(spellID,unit)
 	if unit==nil then unit="player" end
@@ -280,25 +299,36 @@ function hasNoControl(spellID,unit)
 end
 -- if hasThreat("target") then
 function hasThreat(unit,playerUnit)
-	local unit = unit or "target"
-	local playerUnit = playerUnit or "player"
-	local unitThreat
-	local targetOfTarget
-	local targetFriend
-	if GetObjectExists("targettarget") and GetObjectExists(unit) then targetOfTarget = UnitTarget(unit) else targetOfTarget = "player" end
-	if GetObjectExists("targettarget") then targetFriend = (UnitInParty(targetOfTarget) or UnitInRaid(targetOfTarget)) else targetFriend = false end
-	for i = 1, #br.friend do
-		local thisUnit = br.friend[i].unit
-		if UnitThreatSituation(unit, thisUnit)~=nil then
-			return true
+	if playerUnit == nil then playerUnit = "player" end
+	if GetUnit(unit) == nil then 
+		targetUnit = "None" 
+	elseif UnitTarget(GetUnit(unit)) ~= nil then
+		targetUnit = UnitTarget(GetUnit(unit))
+	else
+		targetUnit = "None"
+	end
+	if targetUnit == "None" then targetFriend = false else targetFriend = (UnitName(targetUnit) == UnitName("player") or UnitInParty(targetUnit) or UnitInRaid(targetUnit)) end
+	-- Print(tostring(unit).." | "..tostring(GetUnit(unit)).." | "..tostring(targetUnit).." | "..tostring(targetFriend))
+	if unit == nil or not GetObjectExists(targetUnit) then return false end
+	if targetFriend then
+		if isChecked("Cast Debug") and not GetObjectExists("target") then Print(UnitName(GetUnit(unit)).." is targetting "..UnitName(targetOfTarget)) end
+		return targetFriend
+	elseif UnitDetailedThreatSituation(playerUnit, unit)~=nil then
+		if select(3,UnitDetailedThreatSituation(playerUnit, unit)) > 0 then
+			if isChecked("Cast Debug") and not UnitExists("target") then Print(UnitName(unit).." is threatening you."); end 
+			return true 
+		end
+	elseif #br.friend > 1 then
+		for i = 1, #br.friend do
+			local thisUnit = br.friend[i].unit
+			if UnitDetailedThreatSituation(thisUnit,unit) ~= nil then
+				if select(3,UnitDetailedThreatSituation(thisUnit,unit)) > 0 then 
+					if isChecked("Cast Debug") and not UnitExists("target") then Print(UnitName(unit).." is threatening "..UnitName(thisUnit).."."); end
+					return true 
+				end
+			end
 		end
 	end
-	if UnitThreatSituation(playerUnit, unit)~=nil then
-		return true
-	elseif targetFriend then
-		return true
-	end
-	return false
 end
 -- if isAggroed("target") then
 function isAggroed(unit)

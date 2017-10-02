@@ -48,6 +48,8 @@ function getLineOfSight(Unit1,Unit2)
 		end
 	end
 	local skipLoSTable = {
+		56754, -- Azure Serpent (Shado'pan Monestary)
+		56895, -- Weak Spot - Raigon (Gate of the Setting Sun)
 		76585, 	-- Ragewing
 		77692, 	-- Kromog
 		77182, 	-- Oregorger
@@ -374,7 +376,7 @@ end
 
 -- if isValidTarget("target") then
 function isValidTarget(Unit)
-	if UnitIsEnemy("player",Unit) then
+	if UnitIsEnemy("player",Unit) or isDummy(Unit) then
 		if GetUnitExists(Unit) and not UnitIsDeadOrGhost(Unit) then
 			return true
 		else
@@ -388,40 +390,56 @@ function isValidTarget(Unit)
 		end
 	end
 end
-function isValidUnit(Unit)
-	if GetUnitExists(Unit) and not UnitIsDeadOrGhost(Unit) and (not UnitIsFriend(Unit, "player") or UnitIsEnemy(Unit, "player")) 
-		and UnitCanAttack("player",Unit) and isSafeToAttack(Unit) and getLineOfSight("player", Unit) and UnitInPhase(Unit)
-	then
-		-- Unit is Soul Effigy
-        -- if GetObjectID(Unit) == 103679 then return true end
-        if UnitAffectingCombat("player") then
-        	-- Only consider Units that I have threat with or have targeted or are dummies within 20yrds when in Combat.
-			if hasThreat(Unit) or UnitIsUnit(Unit,"target") or (isDummy(Unit) and getDistance(Unit) <= 20) then return true end
-		elseif IsInInstance() then
-			-- Only consider Units that I have threat with or I am alone and have targeted when not in Combat and in an Instance.
-			if hasThreat(Unit) or (#br.friend == 1 and UnitIsUnit(Unit,"target")) then return true end
-		else
-			-- Only consider Units that are in 20yrs or I have targeted when not in Combat and not in an Instance.
-			if getDistance(Unit) <= 20 or UnitIsUnit(Unit,"target") then return true end
-		end
+function isTargeting(Unit,MatchUnit)
+	if MatchUnit == nil then MatchUnit = "player" end
+	if GetUnit(Unit) == nil then 
+		unitTarget = nil 
+	elseif UnitTarget(GetUnit(Unit)) ~= nil then
+		unitTarget = UnitTarget(GetUnit(Unit))
+	end
+	if unitTarget ~= nil then
+		return unitTarget == GetUnit(MatchUnit)
 	end
 	return false
 end
 function enemyListCheck(Unit)
-	if GetUnitExists(Unit) and not UnitIsDeadOrGhost(Unit) and (not UnitIsFriend(Unit, "player") or UnitIsEnemy(Unit, "player")) 
-		and UnitCanAttack("player",Unit) and isSafeToAttack(Unit) and UnitInPhase(Unit)
-	then
-		-- Unit is Soul Effigy
-        -- if GetObjectID(Unit) == 103679 then return true end
-        if UnitAffectingCombat("player") then
-        	-- Only consider Units that I have threat with or have targeted or are dummies within 20yrds when in Combat.
-			if hasThreat(Unit) or UnitIsUnit(Unit,"target") or (isDummy(Unit) and getDistance(Unit) <= 20) then return true end
-		elseif IsInInstance() then
+	local hostileOnly = isChecked("Hostiles Only")
+	local distance = getDistance(Unit,"player","noMod")
+	return GetObjectExists(Unit) and not UnitIsDeadOrGhost(Unit) and UnitInPhase(Unit) and distance < 50
+		and (not UnitIsFriend(Unit, "player") and (not hostileOnly or (hostileOnly and (UnitIsEnemy(Unit, "player") or isTargeting(Unit) or isDummy(Unit))))) 
+		and UnitCanAttack("player",Unit) and isSafeToAttack(Unit) and not isCritter(Unit) and getLineOfSight("player", Unit)
+	-- then
+	-- 	local inCombat = UnitAffectingCombat("player") or (GetObjectExists("pet") and UnitAffectingCombat("pet"))
+	-- 	local hasThreat = hasThreat(Unit) or isTargeting(Unit) or (GetObjectExists("pet") and (hasThreat(Unit,"pet") or isTargeting(Unit,"pet"))) or isBurnTarget(Unit) > 0
+	-- 	local playerTarget = UnitIsUnit(Unit,"target")
+ --        if inCombat then
+ --        	-- Only consider Units that I have threat with or have targeted or are dummies within 8yrds when in Combat.
+	-- 		if (playerTarget and (#br.friend == 1 or distance < 20)) or hasThreat or (isDummy(Unit) and (distance <= 8 or playerTarget)) then return true end
+	-- 	elseif not inCombat and IsInInstance() then
+	-- 		-- Only consider Units that I have threat with or I am alone and have targeted when not in Combat and in an Instance.
+	-- 		if (#br.friend == 1 and playerTarget) or hasThreat then return true end
+	-- 	elseif not inCombat and not IsInInstance() then
+	-- 		-- Only consider Units that are in 20yrs or I have targeted when not in Combat and not in an Instance.
+	-- 		if (playerTarget or (not GetObjectExists("target") and distance < 20 and not next(br.enemy))) then return true end
+	-- 	end
+	-- end
+	-- return false
+end
+function isValidUnit(Unit)
+	if not pause(true) and Unit ~= nil and (br.enemy[Unit] ~= nil or enemyListCheck(Unit)) then 
+		local distance = getDistance(Unit,"player","noMod")
+		local inCombat = UnitAffectingCombat("player") or (GetObjectExists("pet") and UnitAffectingCombat("pet"))
+		local hasThreat = hasThreat(Unit) or isTargeting(Unit) or (GetObjectExists("pet") and (hasThreat(Unit,"pet") or isTargeting(Unit,"pet"))) or isBurnTarget(Unit) > 0
+		local playerTarget = UnitIsUnit(Unit,"target")
+		if inCombat then
+	    	-- Only consider Units that I have threat with or have targeted or are dummies within 8yrds when in Combat.
+			if (playerTarget and (#br.friend == 1 or distance < 20)) or hasThreat or (isDummy(Unit) and (getDistance(Unit,"target","noMod") <= 8 or playerTarget)) then return true end
+		elseif not inCombat and IsInInstance() then
 			-- Only consider Units that I have threat with or I am alone and have targeted when not in Combat and in an Instance.
-			if hasThreat(Unit) or (#br.friend == 1 and UnitIsUnit(Unit,"target")) then return true end
-		else
+			if (#br.friend == 1 and playerTarget) or hasThreat then return true end
+		elseif not inCombat and not IsInInstance() then
 			-- Only consider Units that are in 20yrs or I have targeted when not in Combat and not in an Instance.
-			if getDistance(Unit) <= 20 or UnitIsUnit(Unit,"target") then return true end
+			if (playerTarget or (not GetObjectExists("target") and distance < 20 and not next(br.enemy))) then return true end
 		end
 	end
 	return false
@@ -516,7 +534,7 @@ function pause(skipCastingCheck)
 	-- Pause Hold/Auto
 	if (pausekey and GetCurrentKeyBoardFocus() == nil and isChecked("Pause Mode"))
 		or profileStop
-		or (IsMounted() and (ObjectExists("target") and GetObjectID("target") ~= 56877)
+		or (IsMounted() and (GetObjectExists("target") and GetObjectID("target") ~= 56877)
 			and not UnitBuffID("player",190784) and not UnitBuffID("player",164222)
 			and not UnitBuffID("player",165803) and not UnitBuffID("player",157059)
 			and not UnitBuffID("player",157060))
@@ -620,6 +638,21 @@ end
 function getOptionValue(Value)
     return getValue(Value)
 end
+function getOptionText(Value)
+	if br.data ~=nil and br.data.settings ~= nil then
+    	local selectedProfile = br.data.settings[br.selectedSpec][br.selectedProfile]
+        if selectedProfile ~= nil then
+        	if selectedProfile[Value.."Data"] ~= nil then
+        		if selectedProfile[Value.."Drop"] ~= nil then
+        			if selectedProfile[Value.."Data"][selectedProfile[Value.."Drop"]] ~= nil then 
+            			return selectedProfile[Value.."Data"][selectedProfile[Value.."Drop"]]
+					end
+            	end
+            end
+        end
+    end
+    return ""
+end 
 
 
 
@@ -660,7 +693,7 @@ function talentAnywhere()
     local removeTalent = RemoveTalent
     local learnTalent = LearnTalent
     -- Load Talent UI if not opened before
-    if not IsAddOnLoaded("Blizzard_TalentUI") then
+    if not IsAddOnLoaded("Blizzard_TalentUI") and not UnitAffectingCombat("player") then
        LoadAddOn("Blizzard_TalentUI")
     end
 
@@ -683,7 +716,7 @@ function talentAnywhere()
     	return selectedTalent, newTalent -- selectedNew
     end
 
-	if PlayerTalentFrame:IsVisible() and not IsResting() then
+	if PlayerTalentFrame and PlayerTalentFrame:IsVisible() and not IsResting() then
         for row = 1, 7 do
         	selectedTalent, newTalent, selectedNew  = talentSelection(row)
         end

@@ -19,21 +19,35 @@ br.debug.cpu.healingEngine = {
     absorbANDhp = 0,
 }
 br.debug.cpu.enemiesEngine = {
-    elapsedTime = 0,
-    totalIterations = 0,
-    currentTime = 0,
-    averageTime = 0,
-    sanityTargets = 0,
-    unitTargets = 0,
+    units = {
+        elapsedTime = 0,
+        totalIterations = 0,
+        currentTime = 0,
+        averageTime = 0,
+        targets = 0,
+        addTime = 0,
+        cycleTime = 0,
+    },
+    enemy = {
+        elapsedTime = 0,
+        totalIterations = 0,
+        currentTime = 0,
+        averageTime = 0,
+        targets = 0,
+        addTime = 0,
+    },
     dynamicTarget = 0,
     getEnemies = 0,
-    countTime = 0,
+    bestUnitFinder = 0,
 }
-br.debug.cpu.cBuilder = {
+br.debug.cpu.rotation = {
+    loadTime = 0,
     elapsedTime = 0,
     totalIterations = 0,
     currentTime = 0,
     averageTime = 0,
+    baseUpdate = 0,
+    inCombat = 0,
 }
 br.debug.cpu.pulse = {
     elapsedTime = 0,
@@ -88,3 +102,19 @@ function br.timer:useTimer(timerName, interval)
         return false
     end
 end
+
+--[[br.timer = {}
+function br.timer:useTimer(timerName, interval, randomPercent)
+    local randomPercent = randomPercent or 0
+    if randomPercent > 0 then
+        local randomRange = interval * randomPercent / 100
+        interval = interval - randomRange + math.random(0, randomRange * 2)
+    end
+    if self[timerName] == nil then self[timerName] = 0 end
+    if GetTime()-self[timerName] >= interval then
+        self[timerName] = GetTime()
+        return true
+    else
+        return false
+    end
+end--]]

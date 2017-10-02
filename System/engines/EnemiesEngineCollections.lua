@@ -68,11 +68,11 @@ burnUnitCandidates = {
 	[71076] = { coef = 25 }, -- Proving ground healer
 	-- Legion
 	[120651] = { coef = 150, name = "Fel Explosives"}, -- M+ Affix
-	[115642] = { coef = 200}, -- Umbral Imps - Challenge mode
-	[115638] = { coef = 175, buff = 243113},
-	[115641] = { coef = 150}, -- Smoldering Imps
-	[115640] = { coef = 125}, -- Fuming Imps
-	[115719] = { coef = 100}, -- Imp Servents
+	-- [115642] = { coef = 100}, -- Umbral Imps - Challenge mode
+	-- [115638] = { coef = 175, buff = 243113},
+	-- [115641] = { coef = 150}, -- Smoldering Imps
+	-- [115640] = { coef = 125}, -- Fuming Imps
+	-- [115719] = { coef = 200}, -- Imp Servents
 }
 -- shielding and levels, we should add coef as shield %
 shieldedUnitCandidates = {
@@ -98,6 +98,9 @@ doNotTouchUnitCandidates = {
     { unitID = 104154, buff = 206516 }, -- Don't attack Gul'dan when he is in The Eye of Aman'Thul cage
     -- Nighthold: Mythic Spellblade - Fel Soul
     { unitID = 115905}, 
+    -- Tomb of Sargeras
+    { unitID = 116689, buff = 233441 }, -- Don't attack Atrigan while Bonesaw
+    { unitID = 116691, buff = 235230 }, -- Don't attack Belac while Fel Squall
 }
 -- list of units to stun, either always or udner certain condition such as having a buff or wirldwinding etc
 crowdControlCandidates = {
@@ -331,4 +334,10 @@ interruptWhitelist = { -- List provided by Admire
 	209568, -- Exothermic Release
 	209617, -- Expedite
 	208672, -- Carrion wave
+	239401, -- Pangs of Guild (Belac)
+	233371, -- Watery Splash (Harjatan fight)
+	241509, -- Water Blast (Mistress fight)
+	200631, -- Unnerving Screech
+	225562, -- Blood Metamorphosis
+	211875, -- Bladestorm
 }

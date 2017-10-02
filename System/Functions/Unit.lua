@@ -9,6 +9,16 @@ function GetObjectExists(Unit)
 		return false
 	end
 end
+function GetUnit(Unit)
+	if Unit ~= nil and GetObjectExists(Unit) then
+		if (EWT or Toolkit_GetVersion ~= nil) then
+			return Unit
+		elseif FireHack and not (EWT or Toolkit_GetVersion ~= nil) then
+			return ObjectIdentifier(Unit)
+		end
+	end
+	return nil
+end
 function GetUnitExists(Unit)
 	if Unit == nil then return false end
 	return UnitExists(Unit)
@@ -33,7 +43,7 @@ function GetObjectPosition(Unit)
 end
 function GetObjectType(Unit)
     if FireHack and GetObjectExists(Unit) then
-        return ObjectType(Unit)
+        return ObjectTypes(Unit)
     else
         return 65561
     end
@@ -61,7 +71,7 @@ function GetObjectID(Unit)
 end
 --[[ OLD pcall functions
 function GetObjectExists(Unit)
-	if select(2,pcall(ObjectExists,Unit)) == true then
+	if select(2,pcall(GetObjectExists,Unit)) == true then
 		return true
 	else
 		return false
@@ -83,7 +93,7 @@ function GetObjectPosition(Unit)
 end
 function GetObjectType(Unit)
 	if GetObjectExists(Unit) then
-		return select(2,pcall(ObjectType,Unit))
+		return select(2,pcall(ObjectTypes,Unit))
 	else
 		return false
 	end
@@ -113,6 +123,23 @@ function UnitIsTappedByPlayer(mob)
 	else
 		return false
 	end
+end
+function getSpellUnit(spellCast)
+	local spellName,_,_,_,_,maxRange = GetSpellInfo(spellCast)
+	local spellType = getSpellType(spellName)
+	if maxRange == nil or maxRange == 0 then maxRange = 5 end
+    if spellType == "Helpful" then
+        thisUnit = "player"
+    elseif spellType == "Harmful" or spellType == "Both" then  
+        thisUnit = br.player.units(maxRange) 
+    elseif spellType == "Unknown" and getDistance(br.player.units(maxRange)) < maxRange then
+        if castSpell(br.player.units(maxRange),spellCast,false,false,false,false,false,false,false,true) then 
+            thisUnit = br.player.units(maxRange)
+        elseif castSpell("player",spellCast,false,false,false,false,false,false,false,true) then
+            thisUnit = "player"
+        end 
+    end
+    return thisUnit
 end
 -- if getCreatureType(Unit) == true then
 function getCreatureType(Unit)
@@ -286,6 +313,20 @@ function isBoss(unit)
 		return false
 	end
 end
+function isCritter(Unit) -- From LibBabble
+	if Unit == nil then Unit = "target" end
+	local unitType = UnitCreatureType(Unit)
+	return unitType == "Critter"
+		or unitType == "Kleintier"
+		or unitType == "Bestiole"
+		or unitType == "동물"
+		or unitType == "Alma"
+		or unitType == "Bicho"
+		or unitType == "Animale"
+		or unitType == "Существо"
+		or unitType == "小动物"
+		or unitType == "小動物"
+end
 -- Dummy Check
 function isDummy(Unit)
 	if Unit == nil then
@@ -403,7 +444,7 @@ function isDummy(Unit)
 			[70245]  = "Training Dummy",              -- Lvl ?? (Throne of Thunder)
 			[113964] = "Raider's Training Dummy",     -- Lvl ?? (The Dreamgrove) - Tanking
 		}
-		if dummies[tonumber(string.match(UnitGUID(Unit),"-(%d+)-%x+$"))] ~= nil then
+		if dummies[tonumber(string.match(UnitGUID(Unit),"-(%d+)-%x+$"))] then --~= nil 
 			return true
 		end
 	end
