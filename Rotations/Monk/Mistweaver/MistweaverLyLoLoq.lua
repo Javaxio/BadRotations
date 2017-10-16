@@ -298,29 +298,16 @@ local function runRotation()
     -------------------
     ---  Boss Mods  ---
     -------------------
+
     AddEventCallback("ENCOUNTER_START",function(...)
 	    encounterID = select(1,...)
         --print(encounterID)
     end)
 
-    --local function drawline(target)
-    --    local LibDraw = LibStub("LibDraw-1.0")
-    --    local playerX, playerY, playerZ = ObjectPosition("player")
-    --   local targetX, targetY, targetZ = ObjectPosition(target)
-    --    LibDraw.Line(playerX, playerY, playerZ, targetX, targetY, targetZ)
-    --end
-
-    --local function clearCanvas()
-    --    local LibDraw = LibStub("LibDraw-1.0")
-    --    LibDraw.clearCanvas()
-    --end
-
     local function findIllidan()
         for i = 1, ObjectCount() do
             local name = ObjectName(ObjectWithIndex(i))
             local object = ObjectWithIndex(i)
-            --local px, py, pz = ObjectPosition("player")
-            --local tx, ty, tz = ObjectPosition(object)
             if name == "Lord Illidan Stormrage" and ObjectExists(object) then
                 return object
             end
