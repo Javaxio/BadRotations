@@ -127,12 +127,20 @@ if not metaTable1 then
 		end
 		-- We are checking the HP of the person through their own function.
 		function o:CalcHP()
+			-- Darkness phase of Kil'Jaeden. basically blacklists all friends if I have this debuff, since I can't heal.
+			if UnitDebuffID("player",236555) and not UnitDebuffID("player",241721) then
+				return 250,250,250
+			end
 			-- Place out of range players at the end of the list -- replaced range to 40 as we should be using lib range
 			if not UnitInRange(o.unit) and getDistance(o.unit) > 40 and not UnitIsUnit("player", o.unit) then
 				return 250,250,250
 			end
 			-- Place Dead players at the end of the list
 			if HealCheck(o.unit) ~= true then
+				return 250,250,250
+			end
+			-- Place blacklisted spearOfAngush players at the end of the list
+			if o.spearOfAnguishState == 2 then
 				return 250,250,250
 			end
 			-- incoming heals
@@ -468,6 +476,23 @@ if not metaTable1 then
 				for i=1, #br.friend do
 					-- We are updating all of the User Info (Health/Range/Name)
 					br.friend[i]:UpdateUnit()
+					-- special handling for Spear of Anguish debuff (Engine of Souls)
+					if (UnitDebuffID(br.friend[i].unit,235933) or UnitDebuffID(br.friend[i].unit,238442) or UnitDebuffID(br.friend[i].unit,242796)) -- if unit is afflicted by spear of anguish
+						and UnitAuraID(br.friend[i].unit,235621) and UnitAuraID("player",235621) -- and both the Unit and "player" are in the spirit realm
+					then
+						br.friend[i].spearOfAnguishState = 1 -- set state to 1, indicating the player has spearOfAnguish
+						Print("Spear of Anguish on "..br.friend[i].name)
+					elseif br.friend[i].spearOfAnguishState == 1 -- if no spear debuff, but had it before
+					then
+						br.friend[i].spearOfAnguishState = 2 -- then set state to 2, which will blacklist for healing
+						br.friend[i].spearOfAnguishBlacklistTime = GetTime()
+						Print("Spear of Anguish Blacklisting "..br.friend[i].name)
+					elseif br.friend[i].spearOfAnguishState == 2 -- if blacklisted more than 10 seconds
+						and GetTime() - br.friend[i].spearOfAnguishBlacklistTime > 10
+					then
+						br.friend[i].spearOfAnguishState = 0 -- remove from blacklist
+						Print("Blacklist expired for "..br.friend[i].name)
+					end
 				end
 				-- We are sorting by Health first
 				table.sort(br.friend, function(x,y)

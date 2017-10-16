@@ -220,12 +220,27 @@ local function runRotation()
 
 
         units.dyn40 = br.player.units(40)
-        enemies.yards40 = br.player.units(40)
+        enemies.yards40 = br.player.enemies(40)
 
         if GetObjectExists("pet") then
             enemies.yards8pet = br.player.enemies(8,GetUnit("pet"))
         else
             enemies.yards8pet = {}
+        end
+
+        local lowestUnit = lowestUnit or units.dyn40
+        for i = 1, #enemies.yards40 do
+            local thisUnit = enemies.yards40[i]
+            if debuff.bestialFerocity.exists(thisUnit) then
+                if debuff.bestialFerocity.exists(lowestUnit) then
+                    lowestFerocity = debuff.bestialFerocity.remain(lowestUnit)
+                else
+                    lowestFerocity = 40
+                end
+                if debuff.bestialFerocity.remain(thisUnit) < lowestFerocity then
+                    lowestUnit = thisUnit
+                end
+            end
         end
 
    		if leftCombat == nil then leftCombat = GetTime() end
@@ -533,13 +548,13 @@ local function runRotation()
             -- Cooldowns
                     if actionList_Cooldowns() then return end
             -- Kill Command
-                    -- kill_command,if=equipped.qapla_eredun_war_order
-                    if hasEquiped(137227) then
-                        if cast.killCommand() then return end
+                    -- kill_command,target_if=min:bestial_ferocity.remains,if=equipped.qapla_eredun_war_order|talent.aspect_of_the_beast.enabled
+                    if (hasEquiped(137227) or talent.aspectOfTheBeast) then
+                        if cast.killCommand(lowestUnit) then return end
                     end
             -- Dire Beast
-                    -- dire_beast,if=((!equipped.qapla_eredun_war_order|cooldown.kill_command.remains>=1)&(set_bonus.tier19_2pc|!buff.bestial_wrath.up))|full_recharge_time<gcd.max|cooldown.titans_thunder.up|spell_targets>1
-                    if not talent.direFrenzy and (((not hasEquiped(137227) or cd.killCommand.remain() >= 1) and (t19_2pc or not buff.bestialWrath.exists())) or charges.direBeast.timeTillFull() < gcdMax or cd.titanthunder.remain() == 0 or #enemies.yards8pet >= getOptionValue("Units To AoE")) then
+                    -- dire_beast,if=(!equipped.qapla_eredun_war_order|cooldown.kill_command.remains>=1)|full_recharge_time<gcd.max|cooldown.titans_thunder.up|spell_targets>1
+                    if not talent.direFrenzy and --[[(--]]((not hasEquiped(137227) or cd.killCommand.remain() >= 1)--[[ and (t19_2pc or not buff.bestialWrath.exists()))--]] or charges.direBeast.timeTillFull() < gcdMax or cd.titansThunder.remain() == 0 or #enemies.yards8pet >= getOptionValue("Units To AoE")) then
                         if cast.direBeast() then return end
                     end
             -- Dire Frenzy

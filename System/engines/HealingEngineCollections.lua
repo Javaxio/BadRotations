@@ -21,6 +21,11 @@ novaEngineTables.DispelID = {
 	-- Belac
 	{ id = 233983, stacks = 0, range = 8}  -- Echoing Anguish http://www.wowhead.com/spell=233983/echoing-anguish
 }
+-- List of debuffs that we should never dispell
+novaEngineTables.DoNotDispellList = {
+	-- Midnight (Attumen the Huntsman)
+	{ id = 227404 }, -- Intangible Presence
+}
 -- This is where we house the Debuffs that are bad for our users, and should not be healed when they have it
 novaEngineTables.BadDebuffList= {
 	104451, -- Ice Tomb
@@ -98,13 +103,15 @@ novaEngineTables.SpecificHPDebuffs = {
 	--Trains
 	{ debuff = 165195 , value = 30 }, --http://www.wowhead.com/spell=165195/prototype-pulse-grenade
 	-- Tyrant Velhari
-	{ debuff = 180116 , value = 30}, --http://www.wowhead.com/spell=180166/touch-of-harm
+	{ debuff = 180116 , value = 30 }, --http://www.wowhead.com/spell=180166/touch-of-harm
 	-- Chronomatic Anomaly (M)
-	{ debuff = 206609 , value = 30}, --http://www.wowhead.com/spell=206609/time-release
+	{ debuff = 206609 , value = 30 }, --http://www.wowhead.com/spell=206609/time-release
 	-- Gul'dan 
-	{ debuff = 221891 , value = 30}, --http://www.wowhead.com/spell=221891/soul-siphon
+	{ debuff = 221891 , value = 30 }, --http://www.wowhead.com/spell=221891/soul-siphon
 	-- Sisters of the Moon (ToS)
-	{debuff = 233263 , value = 30}, --http://www.wowhead.com/spell=233263/embrace-of-the-eclipse
+	{ debuff = 233263 , value = 30 }, --http://www.wowhead.com/spell=233263/embrace-of-the-eclipse
+	-- Fallen Avater (ToS)
+	{ debuff = 240728 , value = -100, stacks = 8 }, --http://www.wowhead.com/spell=240728/tainted-essence
 }
 -- this table will assign role to any unit wearing the unit name
 novaEngineTables.roleTable = {
@@ -141,6 +148,11 @@ novaEngineTables.BadlyDeBuffed = {
 		158315, --http://www.wowhead.com/spell=158315/dark-hunt
 		--Trains
 		165195,--http://www.wowhead.com/spell=165195/prototype-pulse-grenade
+		--Engine of Souls
+		235933, -- Spear of Anguish debuff
+		238442, -- Spear of Anguish debuff
+		242796, -- Spear of Anguish debuff
+		236135, -- Wither (Soul Queen Dejahna of Desolate Host encounter)
 
 }
 -- Table for NPCs we do not want to add to table (eg. Hymdal/Odyn after they become friendly)

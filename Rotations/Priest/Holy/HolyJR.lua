@@ -49,9 +49,9 @@ local function createOptions()
         -- Dummy DPS Test
             br.ui:createSpinner(section, "DPS Testing",  5,  5,  60,  5,  "Enables/Disables DPS Testing", "Set to desired time for test in minuts. Min: 5 / Max: 60 / Interval: 5")
         -- Angelic Feather
-            br.ui:createCheckbox(section,"Angelic Feather", "Enables/Disables Angelic Feather usage")
+            br.ui:createCheckbox(section,"Angelic Feather", "Cast Angelic Feather on Self when moving")
         -- Body and Mind
-            br.ui:createCheckbox(section,"Body and Mind", "Enables/Disables Body and Mind usage")
+            br.ui:createCheckbox(section,"Body and Mind", "Cast Body and Mind on Self when moving")
         -- Elixir
             br.ui:createDropdown(section,"Elixir", {"Flask of the Whispered Pact","Repurposed Fel Focuser","Oralius' Whispering Crystal","None"}, 1, "Set Elixir to use.")
         -- Min Mana to DPS
@@ -61,6 +61,8 @@ local function createOptions()
         --- COOLDOWN OPTIONS --- -- Define Cooldown Options
         ------------------------
         section = br.ui:createSection(br.ui.window.profile,  "Cooldowns")
+        -- Group Heal Spam
+            br.ui:createDropdown(section, "Group Heal Spam Hotkey", br.dropOptions.Toggle, 6, "Spam Group Healing (Sanctify,PoH) at cursor location.")
         -- Guardian Spirit
             br.ui:createSpinnerWithout(section, "Guardian Spirit",  25,  0,  100,  5,  "Health Percent to Cast At")
         -- Guardian Spirit Tank Only
@@ -196,14 +198,13 @@ local function runRotation()
     local cd                                            = br.player.cd
     local charges                                       = br.player.charges
     local debuff                                        = br.player.debuff
-    local falling, swimming, flying, moving, mounted    = getFallTime(), IsSwimming(), IsFlying(), GetUnitSpeed("player")>0, IsMounted()
+    local falling, swimming, flying, mounted            = getFallTime(), IsSwimming(), IsFlying(), IsMounted()
     local gcd                                           = br.player.gcd
     local inCombat                                      = br.player.inCombat
     local inInstance                                    = br.player.instance=="party"
     local inRaid                                        = br.player.instance=="raid"
     local item                                          = br.player.spell.items
     local level                                         = br.player.level
-    local lowestHP                                      = br.friend[1].unit
     local mana                                          = br.player.power.mana.percent()
     local mode                                          = br.player.mode
     local moving                                        = isMoving("player") and not br.player.buff.norgannonsForesight.exists()
@@ -271,12 +272,12 @@ local function runRotation()
         end -- End Dummy Test
     -- Moving
         if moving then
-            if isChecked("Angelic Feather") and talent.angelicFeather and not buff.angelicFeather.exists("player") then
+            if isChecked("Angelic Feather") and talent.angelicFeather and not buff.angelicFeather.exists("player") and not UnitAura("player",GetSpellInfo(224098)) then
                 cast.angelicFeather("player")
                 --RunMacroText("/cast [@Player] Angelic Feather")
             end
             -- Body and Mind
-            if isChecked("Body and Mind") and talent.bodyAndMind then
+            if isChecked("Body and Mind") and talent.bodyAndMind and not UnitAura("player",GetSpellInfo(224098)) then
                 if cast.bodyAndMind("player") then return true end
             end
         end
@@ -312,6 +313,32 @@ local function runRotation()
 
 
 ---***************************************************************************************************************************
+--- Action List Spam Group Heals *********************************************************************************************
+---***************************************************************************************************************************
+    local function actionList_SpamGroupHeals()
+    -- Velens
+        if isChecked("Velens Future Sight") and hasEquiped(144258) then
+            if GetItemCooldown(144258)==0 then
+                useItem(144258)
+            end
+        end
+    -- Holy Word: Sanctify
+        if cd.holyWordSanctify.remain() == 0 then
+            CastSpellByName(GetSpellInfo(spell.holyWordSanctify),"cursor")
+            return true
+        end
+    -- Circle of Healing
+        if talent.circleOfHealing and cd.circleOfHealing.remain() == 0 then
+            CastSpellByName(GetSpellInfo(spell.circleOfHealing),"cursor")
+            return true
+        end
+    -- Prayer of Healing
+        if not moving and cast.prayerOfHealing("player") then return true end
+    end
+    
+
+
+---***************************************************************************************************************************
 --- Action List DPS **********************************************************************************************************
 ---***************************************************************************************************************************
     local function actionList_DPS()
@@ -335,12 +362,19 @@ local function runRotation()
 ---***************************************************************************************************************************
     local function actionList_Emergency()
     -- The Deceiver's Grand Design
-        if isChecked("The Deceivers Grand Design") and hasEquiped(147007) and canUse(147707) then
+        if isChecked("The Deceivers Grand Design") and hasEquiped(147007) and canUse(147007) then
             local localizedName = select(1,GetItemInfo(147007))
             for i=1, #tanks do
                 thisTank = tanks[i]
                 if UnitInRange(thisTank.unit) and not buff.guidingHand.exists(thisTank.unit) then
                     UseItemByName(localizedName, thisTank.unit)
+                end
+            end
+            if #tanks == 0 then
+                for i = 1, #friends.yards40 do
+                    if not buff.guidingHand.exists(friends.yards40[i].unit) then
+                        if cast.purify(friends.yards40[i].unit) then return true end
+                    end
                 end
             end
         end
@@ -355,11 +389,15 @@ local function runRotation()
                 end
             end
     -- Fade
-        if isChecked("Fade") and not solo and cd.fade.remain == 0 then
+        if isChecked("Fade") and not solo and cd.fade.remain() == 0 then
             local myThreat = UnitThreatSituation("player")
             if myThreat ~= nil and myThreat >= 2 then
-                if cast.fade() then return true end
+                cast.fade("player")
             end
+        end
+    -- Group Heals Spam Hotkey
+        if isChecked("Group Heal Spam Hotkey") and (SpecificToggle("Group Heal Spam Hotkey") and not GetCurrentKeyBoardFocus()) then
+            if actionList_SpamGroupHeals() then return true end
         end
     -- Guardian Spirit
         if useCDs() and cd.guardianSpirit.remain() == 0 then
@@ -404,7 +442,7 @@ local function runRotation()
 ---***************************************************************************************************************************
     local function actionList_Heal()
     -- Holy Word: Serenity
-        if inCombat and cd.holyWordSerenity.remain() == 0 then
+        if cd.holyWordSerenity.remain() == 0 then
             for i=1, #tanks do
                 if tanks[i].hp <= getValue("Holy Word: Serenity") then
                     if cast.holyWordSerenity(tanks[i].unit, "aoe") then return true end
@@ -452,6 +490,9 @@ local function runRotation()
             if cd.holyWordSanctify.remain() == 0 and friends.yards40[i].hp < getValue("Holy Word: Sanctify") then
                 tinsert(sanctifyCandidates,friends.yards40[i])
             end
+            if friends.yards40[i].hp < getValue("Prayer of Healing") then
+                tinsert(groupHealCandidates,friends.yards40[i])
+            end
             if talent.circleOfHealing and cd.circleOfHealing.remain() == 0 and friends.yards40[i].hp < getValue("Circle of Healing") then
                 tinsert(circleOfHealingCandidates,friends.yards40[i])
             end
@@ -466,7 +507,7 @@ local function runRotation()
             end
         end
     -- Holy Word: Sanctify
-        if inCombat and cd.holyWordSanctify.remain() == 0 and #sanctifyCandidates >= getValue("Holy Word: Sanctify Targets") then
+        if cd.holyWordSanctify.remain() == 0 and #sanctifyCandidates >= getValue("Holy Word: Sanctify Targets") then
             -- get the best ground location to heal most or all of them
             local loc = getBestGroundCircleLocation(sanctifyCandidates,getValue("Holy Word: Sanctify Targets"),10)
             if loc ~= nil then
@@ -524,7 +565,7 @@ local function runRotation()
             end 
         end
     -- Prayer of Healing
-        if not moving then
+        if not moving and #groupHealCandidates >= getValue("Prayer of Healing Targets") then
             if castWiseAoEHeal(br.friend,spell.prayerOfHealing,40,getValue("Prayer of Healing"),getValue("Prayer of Healing Targets"),5,false,true)  then return true end
         end 
     -- Flash Heal
@@ -560,11 +601,11 @@ local function runRotation()
         if talent.bindingHeal and not moving and #bindingHealCandidates >= 2 then
             for i=1, #tanks do
                 thisTank = tanks[i]
-                if thisTank.hp <= getValue("Binding Heal") then
+                if thisTank.hp <= getValue("Binding Heal") and not UnitIsUnit(thisTank.unit,"player") then
                     if cast.bindingHeal(thisTank.unit, "aoe") then return true end
                 end
             end
-            if lowest.hp <= getValue("Binding Heal") then
+            if lowest.hp <= getValue("Binding Heal") and not UnitIsUnit(lowest.unit,"player") then
                 if cast.bindingHeal(lowest.unit, "aoe") then return true end
             end
         end
@@ -572,7 +613,7 @@ local function runRotation()
         if isChecked("Renew on Tanks") then
             for i=1, #tanks do
                 thisTank = tanks[i]
-                if thisTank.hp <= getValue("Renew on Tanks") and not buff.renew.exists(thistank.unit) then
+                if thisTank.hp <= getValue("Renew on Tanks") and not buff.renew.exists(thisTank.unit) then
                     if cast.renew(thisTank.unit, "aoe") then return true end
                 end
             end
@@ -591,7 +632,7 @@ local function runRotation()
         if isChecked("Renew while moving") and moving then
             for i=1, #tanks do
                 thisTank = tanks[i]
-                if thisTank.hp <= getValue("Renew while moving") and not buff.renew.exists(thistank.unit) then
+                if thisTank.hp <= getValue("Renew while moving") and not buff.renew.exists(thisTank.unit) then
                     if cast.renew(thisTank.unit, "aoe") then return true end
                 end
             end

@@ -413,14 +413,19 @@ local function runRotation()
 			end
     		-- Blessing of Freedom
    			if GetSpellCooldown(1044) == 0 then
+   				-- Vault of the Wardens - Torment cage 202615
+   				-- Arcway -- Devour 211543
+   				-- Avatar - Lingering Darkness - On Self
            		for i = 1, #br.friend do
-          		    if getDebuffRemain(br.friend[i].unit,202615) > 1 or getDebuffRemain(br.friend[i].unit,211543) > 1 then
+          		    if getDebuffRemain(br.friend[i].unit,202615) > 1 or getDebuffRemain(br.friend[i].unit,211543) > 1 or getDebuffRemain(br.friend[i].unit,239212) > 1 then
           			    if cast.blessingOfFreedom(br.friend[i].unit) then return end
           			end
           		end
           	end	
 			-- Blessing of Protection
 			if GetSpellCooldown(1022) == 0 then
+				-- Cathedral - Thrashbite - Scornful Gaze 237726
+				-- Halls of Valor - Fenryr - Scent of Blood 196838
     			for i = 1, #br.friend do
     				if getDebuffRemain(br.friend[i].unit,237726) > 1 or getDebuffRemain(br.friend[i].unit,196838) > 1 then
     					if cast.blessingOfProtection(br.friend[i].unit) then return end
@@ -550,7 +555,7 @@ local function runRotation()
 				-- Crusader Strike
 				if isChecked("Crusader Strike") and talent.crusadersMight and GetSpellCooldown(20473) > 1 then
 					if cast.crusaderStrike(units.dyn5) then return end
-				elseif isChecked("Crusader Strike") and not talent.crusadersMight and (charges.crusaderStrike.count() == 2 or debuff.judgement.exists(units.dyn5) or (charges.crusaderStrike.count() >= 1 and charge.crusaderStrike.recharge() < 3)) then
+				elseif isChecked("Crusader Strike") and not talent.crusadersMight and (charges.crusaderStrike.count() == 2 or debuff.judgement.exists(units.dyn5) or (charges.crusaderStrike.count() >= 1 and charges.crusaderStrike.recharge() < 3)) then
 					if cast.crusaderStrike(units.dyn5) then return end
 				end
 			end

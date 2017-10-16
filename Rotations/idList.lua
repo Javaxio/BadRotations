@@ -350,7 +350,6 @@ br.idList = {
                 anguishOfTheDeceiver        = 201473,
                 containedFury               = 201454,
                 demonSpeed                  = 201469,
-                flamingSoul                 = 238118,
                 furyOfTheIllidari           = 201467,
                 warglaivesOfChaos           = 214795,
             },
@@ -423,6 +422,7 @@ br.idList = {
                 devourSoul                  = 212821,
                 embraceThePain              = 212816,
                 fieryDemise                 = 212817,
+				flamingSoul                 = 238118,
                 fueledByPain                = 213017,
                 honedWarblades              = 207352,
                 infernalForce               = 207375,
@@ -1132,7 +1132,7 @@ br.idList = {
                 mendPet                     = 136,
             },
             debuffs                         = {
-
+                bestialFerocity             = 191413,
             },
             glyphs                          = {
 
@@ -1967,13 +1967,17 @@ br.idList = {
             buffs                           = {
                 angelicFeather              = 121557,
                 atonement                   = 194384,
+                bodyAndSoul                 = 65081,
+                borrowedTime                = 197763,
                 clarityOfWill               = 152118,
                 innervate                   = 29166;
                 overloadedWithLight         = 223166,
+                penitent                    = 246519,
                 powerInfusion               = 10060,
                 powerWordShield             = 17,
                 rapture                     = 47536,
-                symbolOfHope                = 64901;
+                speedOfThePious             = 197767,
+                symbolOfHope                = 64901,
             },
             debuffs                         = {
                 purgeTheWicked              = 204213,
@@ -3285,6 +3289,7 @@ br.idList = {
             buffs                               = {
                 ancientHysteria                 = 90355,
                 bloodlust                       = 2825,
+				defiledAugmentation             = 224001, -- Lightforged Augment Rune buff
                 felFocus                        = 242551,
                 flaskOfTenThousandScars         = 188035,
                 flaskOfTheCountlessArmies       = 188034,
@@ -3319,6 +3324,7 @@ br.idList = {
                 flaskOfTheWhisperedPact         = 127847,
                 healthstone                     = 5512,
                 hornOfValor                     = 133642,
+				lightforgedAugmentRune          = 153023, -- 7.3 augment rune item
                 oraliusWhisperingCrystal        = 118922,
                 potionOfProlongedPower          = 142117,
                 repurposedFelFocuser            = 147707,

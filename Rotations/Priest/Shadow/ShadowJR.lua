@@ -34,11 +34,11 @@ local function createToggles()
     };
     CreateButton("VoidForm",4,0)
     -- Interrupt button
-    InterruptModes = {
+    InterruptToggleModes = {
         [1] = { mode = "On", value = 1 , overlay = "Interrupts Enabled", tip = "Includes Basic Interrupts.", highlight = 1, icon = br.player.spell.consumeMagic},
         [2] = { mode = "Off", value = 2 , overlay = "Interrupts Disabled", tip = "No Interrupts will be used.", highlight = 0, icon = br.player.spell.consumeMagic}
     };
-    CreateButton("Interrupt",5,0)
+    CreateButton("InterruptToggle",5,0)
 end
 
 ---------------
@@ -51,9 +51,11 @@ local function createOptions()
         local section
         -- General Options
         section = br.ui:createSection(br.ui.window.profile, "General")
-        -- Dummy DPS Test
+            -- Dummy DPS Test
             br.ui:createSpinner(section, "DPS Testing",  5,  5,  60,  5,  "Set to desired time for test in minuts. Min: 5 / Max: 60 / Interval: 5")
-        -- Pre-Pull Timer
+            -- Rotation Mode
+            br.ui:createDropdownWithout(section,"Rotation Mode", {"SIMC mode","JR Mode (expiremental)"}, 1, "Choose rotation mode.")
+            -- Pre-Pull Timer
             br.ui:createSpinner(section, "Pre-Pull Timer",  5,  1,  10,  1,  "Set to desired time to start Pre-Pull (DBM Required). Min: 1 / Max: 10 / Interval: 1")
             -- Body and Soul
             br.ui:createCheckbox(section,"PWS: Body and Soul")
@@ -176,8 +178,8 @@ local function createOptions()
             br.ui:createCheckbox(section, "Psychic Scream")
             -- Mind Bomb
             -- br.ui:createCheckbox(section, "Mind Bomb")
-            -- Interrupt Mode
-            br.ui:createDropdownWithout(section,"Interrupt Mode", {"Focus","Target","All in Range"}, 2, "Interrupt your focus, your target, or all enemies in range.")
+            -- Interrupt Target
+            br.ui:createDropdownWithout(section,"Interrupt Target", {"Focus","Target","All in Range"}, 2, "Interrupt your focus, your target, or all enemies in range.")
             -- Interrupt Percentage
             br.ui:createSpinner(section, "Interrupt At",  10,  0,  95,  5,  "Cast Percent to Cast At")
         br.ui:checkSectionState(section)
@@ -210,10 +212,10 @@ local function runRotation()
     UpdateToggle("Rotation",0.25)
     UpdateToggle("Cooldown",0.25)
     UpdateToggle("Defensive",0.25)
-    UpdateToggle("VoidEruption",0.25)
     UpdateToggle("VoidForm",0.25)
-    UpdateToggle("Interrupt",0.25)
+    UpdateToggle("InterruptToggle",0.25)
     br.player.mode.voidForm = br.data.settings[br.selectedSpec].toggles["VoidForm"]
+    br.player.mode.interruptToggle = br.data.settings[br.selectedSpec].toggles["InterruptToggle"]
 --------------
 --- Locals ---
 --------------
@@ -300,6 +302,9 @@ local function runRotation()
     local raidMovementWithin15 = 0   -- trying to come up with a clever way to manage this, maybe a toggle or something. For now, just assume we always have to move soon
 
     local activeEnemies = #enemies.yards40
+    -- searEnemmies represents the number of enemies in mind sear range of the primary target.
+    local searEnemies = getEnemies(units.dyn40, 8, true)
+
     if mode.rotation == 3 then
         activeEnemies = 1
         SWPmaxTargets = 1
@@ -324,7 +329,6 @@ local function runRotation()
     insanityDrain = 6 + (2 / 3 * (drainStacks)) 
 
     -- Mind Flay Ticks
-    --local mfTick
     if mfTick == nil or not inCombat or not isCastingSpell(spell.mindFlay) then mfTick = 0 end
     if br.timer:useTimer("Mind Flay Ticks", 0.75) and isCastingSpell(spell.mindFlay) then
         mfTick = mfTick + 1
@@ -397,7 +401,7 @@ local function runRotation()
                 for i = 1, #enemies.yards40 do
                     local thisUnit = enemies.yards40[i]
                     if not solo and hasThreat(thisUnit) then
-                        if cast.fade("player") then return end
+                        cast.fade("player")
                     end
                 end
             end
@@ -422,14 +426,14 @@ local function runRotation()
     -- Action List - Interrupts
     function actionList_Interrupts()
     -- Silence
-        if isChecked("Silence") then
-            if getOptionValue("Interrupt Mode") == 1 and UnitIsEnemy("player","focus") and canInterrupt("focus",getOptionValue("Interrupt At")) then
+        if isChecked("Silence") and mode.interruptToggle == 1 then
+            if getOptionValue("Interrupt Target") == 1 and UnitIsEnemy("player","focus") and canInterrupt("focus",getOptionValue("Interrupt At")) then
                 if cast.silence("focus") then return end
             end
-            if getOptionValue("Interrupt Mode") == 2 and UnitIsEnemy("player","target") and canInterrupt("target",getOptionValue("Interrupt At")) then
+            if getOptionValue("Interrupt Target") == 2 and UnitIsEnemy("player","target") and canInterrupt("target",getOptionValue("Interrupt At")) then
                 if cast.silence("target") then return end
             end
-            if getOptionValue("Interrupt Mode") == 3 then
+            if getOptionValue("Interrupt Target") == 3 then
                 for i=1, #enemies.yards30 do
                     thisUnit = enemies.yards30[i]
                     if canInterrupt(thisUnit,getOptionValue("Interrupt At")) then
@@ -438,15 +442,15 @@ local function runRotation()
                 end
             end
         end
-        if isChecked("Psychic Scream") then
+        if isChecked("Psychic Scream") and mode.interruptToggle == 1 then
     -- Psychic Scream
-            if getOptionValue("Interrupt Mode") == 1 and UnitIsEnemy("player","focus") and canInterrupt("focus",getOptionValue("Interrupt At")) then
+            if getOptionValue("Interrupt Target") == 1 and UnitIsEnemy("player","focus") and canInterrupt("focus",getOptionValue("Interrupt At")) then
                 if cast.psychicScream("focus") then return end
             end
-            if getOptionValue("Interrupt Mode") == 2 and UnitIsEnemy("player","target") and canInterrupt("target",getOptionValue("Interrupt At")) then
+            if getOptionValue("Interrupt Target") == 2 and UnitIsEnemy("player","target") and canInterrupt("target",getOptionValue("Interrupt At")) then
                 if cast.psychicScream("target") then return end
             end
-            if getOptionValue("Interrupt Mode") == 3 then
+            if getOptionValue("Interrupt Target") == 3 then
                 for i=1, #enemies.yards8 do
                     thisUnit = enemies.yards8[i]
                     if canInterrupt(thisUnit,getOptionValue("Interrupt At")) then
@@ -458,13 +462,13 @@ local function runRotation()
     -- Mind Bomb
         -- mind bomb has a 2 second delay before the interrupt happens. not using as an interrupt source for now ...
         -- TODO figure out a useful way to use mind bomb as an interrupt
-            -- if getOptionValue("Interrupt Mode") == 1 and UnitIsEnemy("player","focus") and canInterrupt("focus",getOptionValue("Interrupt At")) then
+            -- if getOptionValue("Interrupt Target") == 1 and UnitIsEnemy("player","focus") and canInterrupt("focus",getOptionValue("Interrupt At")) then
             --     if cast.mindBomb("focus") then return end
             -- end
-            -- if getOptionValue("Interrupt Mode") == 2 and UnitIsEnemy("player","target") and canInterrupt("target",getOptionValue("Interrupt At")) then
+            -- if getOptionValue("Interrupt Target") == 2 and UnitIsEnemy("player","target") and canInterrupt("target",getOptionValue("Interrupt At")) then
             --     if cast.mindBomb("target") then return end
             -- end
-            -- if getOptionValue("Interrupt Mode") == 3 then
+            -- if getOptionValue("Interrupt Target") == 3 then
             --     if talent.mindBomb then
             --         for i=1, #enemies.yards30 do
             --             thisUnit = enemies.yards30[i]
@@ -635,7 +639,7 @@ local function runRotation()
         --     end
         -- end
     -- Power Word: Shield Body and Soul
-        if isChecked("PWS: Body and Soul") and talent.bodyAndSoul and isMoving("player") and not IsMounted() and not buff.classHallSpeed.exists() then
+        if isChecked("PWS: Body and Soul") and talent.bodyAndSoul and isMoving("player") and not buff.classHallSpeed.exists() then
             if cast.powerWordShield("player") then return end
         end
     end  -- End Action List - Pre-Combat
@@ -671,7 +675,7 @@ local function runRotation()
     -- Action List - Main
     function actionList_Main()
     --Mouseover Dotting
-        if isChecked("Mouseover Dotting") and hasMouse and isValidTarget("mouseover") and not moving and not recentlyCast("mouseover", spell.vampiricTouch, 1.1*gcdMax) then
+        if isChecked("Mouseover Dotting") and hasMouse and (UnitIsEnemy("player","mouseover") or isDummy("mouseover")) and not moving and not recentlyCast("mouseover", spell.vampiricTouch, 1.1*gcdMax) then
             if getDebuffRemain("mouseover",spell.vampiricTouch,"player") <= 3*gcdMax then
                 if cast.vampiricTouch("mouseover") then 
                     lastCastTrackerSpell = spell.vampiricTouch
@@ -681,7 +685,7 @@ local function runRotation()
                 end
             end
         end
-        if isChecked("Mouseover Dotting") and hasMouse and isValidTarget("mouseover") and not recentlyCast("mouseover", spell.shadowWordPain, 1.1*gcdMax) then
+        if isChecked("Mouseover Dotting") and hasMouse and (UnitIsEnemy("player","mouseover") or isDummy("mouseover")) and not recentlyCast("mouseover", spell.shadowWordPain, 1.1*gcdMax) then
             if getDebuffRemain("mouseover",spell.shadowWordPain,"player") <= 3*gcdMax then
                 if cast.shadowWordPain("mouseover") then
                     lastCastTrackerSpell = spell.shadowWordPain
@@ -789,7 +793,7 @@ local function runRotation()
         end
     -- Shadow Word: Death
         -- shadow_word_death,if=(active_enemies<=4|(talent.reaper_of_souls.enabled&active_enemies<=2))&cooldown.shadow_word_death.charges=2&insanity<=(85-15*talent.reaper_of_souls.enabled)
-        if (activeEnemies <= 4 or (talent.reaperOfSouls and (activeEnemies <= 2 or mode.rotation == 3)))
+        if (#searEnemies <= 4 or (talent.reaperOfSouls and (activeEnemies <= 2 or mode.rotation == 3)))
             and charges.shadowWordDeath.count() == 2 and (power <= (85 - 15 * reaperOfSouls) or mode.voidForm == 2)
         then
             -- If Zeks Exterminatus (legendary cloak) has procced, SW:D is castable on any target, regardless of HP
@@ -808,7 +812,7 @@ local function runRotation()
         end
     -- Mind Blast
         -- mind_blast,if=active_enemies<=4&talent.legacy_of_the_void.enabled&(insanity<=81|(insanity<=75.2&talent.fortress_of_the_mind.enabled))
-        if activeEnemies <= 4 and not moving and talent.legacyOfTheVoid and ((power <= 81 or (power <= 75.2 and talent.fortressOfTheMind)) or mode.voidForm == 2)
+        if #searEnemies <= 4 and not moving and talent.legacyOfTheVoid and ((power <= 81 or (power <= 75.2 and talent.fortressOfTheMind)) or mode.voidForm == 2)
             and not recentlyCast(units.dyn40, spell.mindBlast, 0.9*gcdMax) 
         then
             if cast.mindBlast(units.dyn40) then 
@@ -820,7 +824,7 @@ local function runRotation()
         end
     -- Mind Blast
         -- mind_blast,if=active_enemies<=4&!talent.legacy_of_the_void.enabled|(insanity<=96|(insanity<=95.2&talent.fortress_of_the_mind.enabled))
-        if activeEnemies <= 4 and not moving and not talent.legacyOfTheVoid and (power <= 96 or ((power <= 95.2 and talent.fortressOfTheMind)) or mode.voidForm == 2)
+        if #searEnemies <= 4 and not moving and not talent.legacyOfTheVoid and (power <= 96 or ((power <= 95.2 and talent.fortressOfTheMind)) or mode.voidForm == 2)
             and not recentlyCast(units.dyn40, spell.mindBlast, 0.9*gcdMax) 
         then
             if cast.mindBlast(units.dyn40) then 
@@ -832,7 +836,7 @@ local function runRotation()
         end
     -- Shadow Word: Pain - on extra dot targets (main target is handled above)
         -- shadow_word_pain,if=!talent.misery.enabled&!ticking&target.time_to_die>10&(active_enemies<5&(talent.auspicious_spirits.enabled|talent.shadowy_insight.enabled)),cycle_targets=1
-        -- if not talent.misery and activeEnemies < 5 and not mode.rotation == 3
+        -- if not talent.misery and #searEnemies < 5 and not mode.rotation == 3
         --     and (talent.auspiciousSpirits or talent.shadowyInsight) and debuff.shadowWordPain.count() < SWPmaxTargets
         -- then
         --     for i = 1, #enemies.yards40 do
@@ -853,7 +857,7 @@ local function runRotation()
         if activeEnemies > 1 and not talent.misery and not mode.rotation == 3 and debuff.vampiricTouch.Count() < VTmaxTargets and not moving then
             for i = 1, #enemies.yards40 do
                 local thisUnit = enemies.yards40[i]
-                if not debuff.vampiricTouch.exists(thisUnit) and (dot_vt_dpgcd * ttd(thisUnit) / (gcdMax * (156 + sear_dpgcd * (activeEnemies - 1)))) > 1
+                if not debuff.vampiricTouch.exists(thisUnit) and (dot_vt_dpgcd * ttd(thisUnit) / (gcdMax * (156 + sear_dpgcd * (#searEnemies - 1)))) > 1
                     and not recentlyCast(thisUnit, spell.vampiricTouch, 1.1*gcdMax) then
                     if cast.vampiricTouch(thisUnit,"aoe") then 
                         -- Print("cast VT on adds")
@@ -870,7 +874,7 @@ local function runRotation()
         if activeEnemies > 1 and not talent.misery and not mode.rotation == 3 and debuff.shadowWordPain.Count() < SWPmaxTargets then
             for i = 1, #enemies.yards40 do
                 local thisUnit = enemies.yards40[i]
-                if not debuff.shadowWordPain.exists(thisUnit) and (dot_swp_dpgcd * ttd(thisUnit) / (gcdMax * (118 + sear_dpgcd * (activeEnemies - 1)))) > 1
+                if not debuff.shadowWordPain.exists(thisUnit) and (dot_swp_dpgcd * ttd(thisUnit) / (gcdMax * (118 + sear_dpgcd * (#searEnemies - 1)))) > 1
                     and not recentlyCast(thisUnit, spell.shadowWordPain, 1.1*gcdMax) then
                     if cast.shadowWordPain(thisUnit,"aoe") then 
                         -- Print("cast SWP on adds")
@@ -1234,6 +1238,34 @@ local function runRotation()
                 end
             end
         end
+-- Higher Priority for DOTS in Void Form (Experimental)
+        if getOptionValue("Rotation Mode") == 2 then
+        -- Vampiric Touch
+            if not moving and not debuff.vampiricTouch.exists(units.dyn40) and ((1 + 0.02 * buff.voidForm.stack()) * dot_vt_dpgcd * ttd(units.dyn40) / (gcdMax * (156 + sear_dpgcd * (#searEnemies - 1)))) > 1 then
+                if cast.vampiricTouch(units.dyn40) then return end
+            end
+            if debuff.vampiricTouch.count() < VTmaxTargets and not moving and not isCastingSpell(spell.vampiricTouch) then
+                for i = 1, #enemies.yards40 do
+                    local thisUnit = enemies.yards40[i]
+                    if not debuff.vampiricTouch.exists(thisUnit) and ((1 + 0.02 * buff.voidForm.stack()) * dot_vt_dpgcd * ttd(thisUnit) / (gcdMax * (156 + sear_dpgcd * (#searEnemies - 1)))) > 1 then
+                        if cast.vampiricTouch(thisUnit,"aoe") then return end
+                    end
+                end
+            end 
+        -- Shadow Word - Pain
+            if not debuff.shadowWordPain.exists(units.dyn40) and ((1 + 0.02 * buff.voidForm.stack()) * dot_swp_dpgcd * ttd(units.dyn40) / (gcdMax * (118 + sear_dpgcd * (#searEnemies - 1)))) > 1 then
+                if cast.shadowWordPain(units.dyn40) then return end
+            end
+            if debuff.shadowWordPain.count() < SWPmaxTargets then
+                for i = 1, #enemies.yards40 do
+                    local thisUnit = enemies.yards40[i]
+                    if not debuff.shadowWordPain.exists(thisUnit) and ((1 + 0.02 * buff.voidForm.stack()) * dot_swp_dpgcd * ttd(thisUnit) / (gcdMax * (118 + sear_dpgcd * (#searEnemies - 1)))) > 1 then
+                        if cast.shadowWordPain(thisUnit,"aoe") then return end
+                    end
+                end
+            end 
+        end
+-- END: Higher Priority for DOTS in Void Form (Experimental)
     -- Shadow Crash
         -- shadow_crash,if=talent.shadow_crash.enabled
         if isChecked("Shadow Crash") and talent.shadowCrash then
@@ -1287,7 +1319,7 @@ local function runRotation()
         end
     -- Shadow Word - Death
         -- shadow_word_death,if=(active_enemies<=4|(talent.reaper_of_souls.enabled&active_enemies<=2))&current_insanity_drain*gcd.max>insanity&(insanity-(current_insanity_drain*gcd.max)+(15+15*talent.reaper_of_souls.enabled))<100
-        if (activeEnemies <= 4 or (talent.reaperOfSouls and activeEnemies <= 2))
+        if (#searEnemies <= 4 or (talent.reaperOfSouls and activeEnemies <= 2))
             and insanityDrain * gcdMax > power and (power - (insanityDrain * gcdMax) + (15 + 15 * reaperOfSouls)) < 100
         then
             -- If Zeks Exterminatus (legendary cloak) has procced, SW:D is castable on any target, regardless of HP
@@ -1311,17 +1343,17 @@ local function runRotation()
         end
     -- Mind Blast
         -- mind_blast,if=active_enemies<=4
-        if activeEnemies <= 4 and not moving then
+        if #searEnemies <= 4 and not moving then
             if cast.mindBlast() then return end
         end
     -- Wait For Mind Blast
         -- wait,sec=action.mind_blast.usable_in,if=action.mind_blast.usable_in<gcd.max*0.28&active_enemies<=4
-        if activeEnemies <= 4 and cd.mindBlast.remain() < gcdMax * 0.28 then
+        if #searEnemies <= 4 and cd.mindBlast.remain() < gcdMax * 0.28 then
             return true
         end
     -- Shadow Word - Death
         -- shadow_word_death,if=(active_enemies<=4|(talent.reaper_of_souls.enabled&active_enemies<=2))&cooldown.shadow_word_death.charges=2
-        if (activeEnemies <= 4 or (talent.reaperOfSouls and activeEnemies <= 2)) and charges.shadowWordDeath.count() == 2 then
+        if (#searEnemies <= 4 or (talent.reaperOfSouls and activeEnemies <= 2)) and charges.shadowWordDeath.count() == 2 then
             -- If Zeks Exterminatus (legendary cloak) has procced, SW:D is castable on any target, regardless of HP
             if getHP(units.dyn40) < executeHP  or buff.zeksExterminatus.exists() then
                 if cast.shadowWordDeath(units.dyn40) then return end
@@ -1355,7 +1387,7 @@ local function runRotation()
             if cast.shadowWordVoid() then return end
         end
     -- Mouseover Dotting
-        if isChecked("Mouseover Dotting") and hasMouse and isValidTarget("mouseover") and not moving and not recentlyCast("mouseover", spell.vampiricTouch, 1.1*gcdMax) then
+        if isChecked("Mouseover Dotting") and hasMouse and (UnitIsEnemy("player","mouseover") or isDummy("mouseover")) and not moving and not recentlyCast("mouseover", spell.vampiricTouch, 1.1*gcdMax) then
             if getDebuffRemain("mouseover",spell.vampiricTouch,"player") <= 3*gcdMax then
                 if cast.vampiricTouch("mouseover") then 
                     lastCastTrackerSpell = spell.vampiricTouch
@@ -1365,7 +1397,7 @@ local function runRotation()
                 end
             end
         end
-        if isChecked("Mouseover Dotting") and hasMouse and isValidTarget("mouseover") and not recentlyCast("mouseover", spell.shadowWordPain, 1.1*gcdMax) then
+        if isChecked("Mouseover Dotting") and hasMouse and (UnitIsEnemy("player","mouseover") or isDummy("mouseover")) and not recentlyCast("mouseover", spell.shadowWordPain, 1.1*gcdMax) then
             if getDebuffRemain("mouseover",spell.shadowWordPain,"player") <= 3*gcdMax then
                 if cast.shadowWordPain("mouseover") then
                     lastCastTrackerSpell = spell.shadowWordPain
@@ -1408,26 +1440,26 @@ local function runRotation()
     -- Shadow Word - Pain
         -- shadow_word_pain,if=!talent.misery.enabled&!ticking&(active_enemies<5|talent.auspicious_spirits.enabled|talent.shadowy_insight.enabled|artifact.sphere_of_insanity.rank())
         if not talent.misery and not debuff.shadowWordPain.exists()
-            and (activeEnemies < 5 or talent.auspiciousSpirits or talent.shadowyInsight or artifact.sphereOfInsanity.enabled())
+            and (#searEnemies < 5 or talent.auspiciousSpirits or talent.shadowyInsight or artifact.sphereOfInsanity.enabled())
         then
             if cast.shadowWordPain() then return end
         end
     -- Vampiric Touch
         -- vampiric_touch,if=!talent.misery.enabled&!ticking&(active_enemies<4|talent.sanlayn.enabled|(talent.auspicious_spirits.enabled&artifact.unleash_the_shadows.rank()))
         if not talent.misery and not debuff.vampiricTouch.exists() and not isCastingSpell(spell.vampiricTouch) and not moving
-            and (activeEnemies < 4 or talent.sanlayn or (talent.auspiciousSpirits and artifact.unleashTheShadows.enabled()))   
+            and (#searEnemies < 4 or talent.sanlayn or (talent.auspiciousSpirits and artifact.unleashTheShadows.enabled()))   
         then
             if cast.vampiricTouch() then return end
         end
         -- vampiric_touch,if=active_enemies>1&!talent.misery.enabled&!ticking&((1+0.02*buff.voidform.stack)*variable.dot_vt_dpgcd*target.time_to_die%(gcd.max*(156+variable.sear_dpgcd*(active_enemies-1))))>1,cycle_targets=1
         if activeEnemies > 1 and not talent.misery and not moving then
-            if not debuff.vampiricTouch.exists(units.dyn40) and ((1 + 0.02 * buff.voidForm.stack()) * dot_vt_dpgcd * ttd(units.dyn40) / (gcdMax * (156 + sear_dpgcd * (activeEnemies - 1)))) > 1 then
+            if not debuff.vampiricTouch.exists(units.dyn40) and ((1 + 0.02 * buff.voidForm.stack()) * dot_vt_dpgcd * ttd(units.dyn40) / (gcdMax * (156 + sear_dpgcd * (#searEnemies - 1)))) > 1 then
                 if cast.vampiricTouch(units.dyn40) then return end
             end
             if debuff.vampiricTouch.count() < VTmaxTargets and not moving and not isCastingSpell(spell.vampiricTouch) then
                 for i = 1, #enemies.yards40 do
                     local thisUnit = enemies.yards40[i]
-                    if not debuff.vampiricTouch.exists(thisUnit) and ((1 + 0.02 * buff.voidForm.stack()) * dot_vt_dpgcd * ttd(thisUnit) / (gcdMax * (156 + sear_dpgcd * (activeEnemies - 1)))) > 1 then
+                    if not debuff.vampiricTouch.exists(thisUnit) and ((1 + 0.02 * buff.voidForm.stack()) * dot_vt_dpgcd * ttd(thisUnit) / (gcdMax * (156 + sear_dpgcd * (#searEnemies - 1)))) > 1 then
                         if cast.vampiricTouch(thisUnit,"aoe") then return end
                     end
                 end
@@ -1436,13 +1468,13 @@ local function runRotation()
     -- Shadow Word - Pain
         -- shadow_word_pain,if=active_enemies>1&!talent.misery.enabled&!ticking&((1+0.02*buff.voidform.stack)*variable.dot_swp_dpgcd*target.time_to_die%(gcd.max*(118+variable.sear_dpgcd*(active_enemies-1))))>1,cycle_targets=1
         if activeEnemies > 1 and not talent.misery then
-            if not debuff.shadowWordPain.exists(units.dyn40) and ((1 + 0.02 * buff.voidForm.stack()) * dot_swp_dpgcd * ttd(units.dyn40) / (gcdMax * (118 + sear_dpgcd * (activeEnemies - 1)))) > 1 then
+            if not debuff.shadowWordPain.exists(units.dyn40) and ((1 + 0.02 * buff.voidForm.stack()) * dot_swp_dpgcd * ttd(units.dyn40) / (gcdMax * (118 + sear_dpgcd * (#searEnemies - 1)))) > 1 then
                 if cast.shadowWordPain(units.dyn40) then return end
             end
             if debuff.shadowWordPain.count() < SWPmaxTargets then
                 for i = 1, #enemies.yards40 do
                     local thisUnit = enemies.yards40[i]
-                    if not debuff.shadowWordPain.exists(thisUnit) and ((1 + 0.02 * buff.voidForm.stack()) * dot_swp_dpgcd * ttd(thisUnit) / (gcdMax * (118 + sear_dpgcd * (activeEnemies - 1)))) > 1 then
+                    if not debuff.shadowWordPain.exists(thisUnit) and ((1 + 0.02 * buff.voidForm.stack()) * dot_swp_dpgcd * ttd(thisUnit) / (gcdMax * (118 + sear_dpgcd * (#searEnemies - 1)))) > 1 then
                         if cast.shadowWordPain(thisUnit,"aoe") then return end
                     end
                 end
@@ -1492,9 +1524,9 @@ local function runRotation()
                 if actionList_Check() then return end
             end
         -- Action List - Interrupts
-            if useInterrupts() then
+            --if useInterrupts() then
                 if actionList_Interrupts() then return end
-            end
+            --end
         -- Action List - Surrender To Madness
             -- s2m,if=buff.voidform.up&buff.surrender_to_madness.up
             if buff.voidForm.exists() and buff.surrenderToMadness.exists() then

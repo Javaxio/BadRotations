@@ -65,6 +65,7 @@ local function createOptions()
             br.ui:createSpinner(section, "DPS Testing",  5,  5,  60,  5,  "|cffFFFFFFSet to desired time for test in minuts. Min: 5 / Max: 60 / Interval: 5")
         -- Opener
             br.ui:createCheckbox(section, "Opener")
+            br.ui:createDropdownWithout(section, "Brutal Slash in Opener", {"|cff00FF00Enabled","|cffFF0000Disabled"}, 1, "|cff15FF00Enable|cffFFFFFF/|cffD60000Disable |cffFFFFFFuse of Brutal Slash in Opener")
         -- Pre-Pull Timer
             br.ui:createSpinner(section, "Pre-Pull Timer",  5,  1,  10,  1,  "|cffFFFFFFSet to desired time to start Pre-Pull (DBM Required). Min: 1 / Max: 10 / Interval: 1")
         -- Travel Shapeshifts
@@ -90,6 +91,7 @@ local function createOptions()
             br.ui:createCheckbox(section,"Racial")
         -- Tiger's Fury
             br.ui:createCheckbox(section,"Tiger's Fury")
+            br.ui:createDropdownWithout(section,"Snipe Tiger's Fury", {"|cff00FF00Enabled","|cffFF0000Disabled"}, 1, "|cff15FF00Enable|cffFFFFFF/|cffD60000Disable |cffFFFFFFuse of Tiger's Fury to take adavantage of Predator talent.")
         -- Berserk / Incarnation: King of the Jungle
             br.ui:createCheckbox(section,"Berserk/Incarnation")
         -- Trinkets
@@ -356,8 +358,29 @@ local function runRotation()
                 end
             end
         end
+
+        -- TF Predator Snipe
+        local function snipeTF()
+            if getOptionValue("Snipe Tiger's Fury") == 1 and talent.predator and not cd.tigersFury.exists() --[[and buff.tigersFury.remain() < gcd and #enemies.yards40 > 1--]] then
+                lowestUnit = units.dyn5
+                lowestHP = 100 
+                for i = 1, #enemies.yards40 do
+                    local thisUnit = enemies.yards40[i]
+                    if getHP(thisUnit) < lowestHP then 
+                        lowestHP = getHP(thisUnit) 
+                        lowestUnit = thisUnit 
+                    end
+                end
+                longestBleed = math.max(debuff.rake.remain(lowestUnit), debuff.rip.remain(lowestUnit), debuff.thrash.remain(lowestUnit), debuff.ashamanesFrenzy.remain(lowestUnit))
+                if ttd(lowestUnit) > 0 then timeTillDeath = ttd(lowestUnit) else timeTillDeath = 99 end
+                if lowestUnit ~= nil and timeTillDeath < longestBleed then return true end
+            end
+            return false
+        end
+
         -- ChatOverlay("5yrds: "..tostring(units.dyn5).." | 40yrds: "..tostring(units.dyn40))
         -- ChatOverlay(round2(getDistance("target","player","dist"),2)..", "..round2(getDistance("target","player","dist2"),2)..", "..round2(getDistance("target","player","dist3"),2)..", "..round2(getDistance("target","player","dist4"),2)..", "..round2(getDistance("target"),2))
+
 --------------------
 --- Action Lists ---
 --------------------
@@ -663,7 +686,7 @@ local function runRotation()
         -- Tiger's Fury
                 -- tigers_fury,if=energy.deficit>=60
                 if isChecked("Tiger's Fury") then
-                    if powerDeficit >= 60 then
+                    if powerDeficit >= 60 or snipeTF() then
                         if cast.tigersFury() then return end
                     end
                 end
@@ -769,7 +792,7 @@ local function runRotation()
         -- Tiger's Fury
                 -- if (not HasBuff(Clearcasting) and PowerToMax >= 60) or PowerToMax >= 80
                 if isChecked("Tiger's Fury") then
-                    if (not buff.clearcasting.exists() and powerDeficit >= 60) or powerDeficit >= 80 then
+                    if (not buff.clearcasting.exists() and powerDeficit >= 60) or powerDeficit >= 80 or snipeTF() then
                         if cast.tigersFury() then return end
                     end
                 end
@@ -872,7 +895,6 @@ local function runRotation()
                         Print("Starting Opener")
                         OPN1 = true
                     elseif (not RK1 or not debuff.rake.exists("target")) then
-                        Print("Rake")
             -- Rake
                         -- rake,if=!ticking|buff.prowl.up
                         if not debuff.rake.exists() or buff.prowl.exists() then
@@ -959,9 +981,13 @@ local function runRotation()
                             THR1 = true
                         end
                     elseif THR1 and (not SHR1 or (combo < 5 and (buff.savageRoar.exists() or not talent.savageRoar))) then
-            -- Shred
+            -- Brutal Slash / Shred
                         if shredCount == nil then shredCount = 10 end
-                        if castOpener("shred","SHR1",shredCount) then shredCount = shredCount + 1 return end
+                        if talent.brutalSlash and charges.brutalSlash.count() >= 1 and getOptionValue("Brutal Slash in Opener") == 1 then
+                            if castOpener("brutalSlash","SHR1",shredCount) then shredCount = shredCount + 1 return end
+                        else
+                            if castOpener("shred","SHR1",shredCount) then shredCount = shredCount + 1 return end
+                        end
                     elseif SHR1 and (RIP1 and (not buff.savageRoar.exists() or combo == 5)) then
        					opener = true;
 						Print("Opener Complete")
@@ -1335,8 +1361,8 @@ local function runRotation()
                     if buff.felFocus.exists() then buff.felFocus.cancel() end
                     if use.oraliusWhisperingCrystal() then return end
                 end
-        -- TODO: food,type=nightborne_delicacy_platte
-        -- TOOD: augmentation,type=defiled
+        -- food,type=nightborne_delicacy_platte
+        -- augmentation,type=defiled
         -- Prowl - Non-PrePull
                     if cat and #enemies.yards20 > 0 and mode.prowl == 1 and not buff.prowl.exists() and not IsResting() and GetTime()-leftCombat > lootDelay then
                         for i = 1, #enemies.yards20 do
@@ -1429,9 +1455,9 @@ local function runRotation()
                 if isChecked("Displacer Beast / Wild Charge") and isValidUnit("target") then
                     if cast.wildCharge("target") then return end
                 end
-        -- TODO: Displacer Beast
+        -- Displacer Beast
                 -- displacer_beast,if=movement.distance>10
-        -- TODO: Dash/Worgen Racial
+        -- Dash/Worgen Racial
                 -- dash,if=movement.distance&buff.displacer_beast.down&buff.wild_charge_movement.down
         -- Rake/Shred from Stealth
                 -- rake,if=buff.prowl.up|buff.shadowmeld.up
